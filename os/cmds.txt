@@ -1,0 +1,11 @@
+////注意：以下命令在windows下只有用gitbash才能得到预期结果
+rust-objdump --versionrust-objdump --version
+//查看文件类型
+file target/riscv64imac-unknown-none-elf/debug/os
+//查看目标信息
+//元信息
+rust-objdump target/riscv64imac-unknown-none-elf/debug/os -x --arch-name=riscv64
+//反汇编
+rust-objdump target/riscv64imac-unknown-none-elf/debug/os -d --arch-name=riscv64
+//去除生成的elf文件中的调试信息，生成内核镜像
+rust-objcopy target/riscv64imac-unknown-none-elf/debug/os --strip-all -O binary target/riscv64imac-unknown-none-elf/debug/kernel.bin
