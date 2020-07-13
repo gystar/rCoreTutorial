@@ -21,3 +21,4 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.13  
 
 - 终于搞定了wls2的编译环境
+-  完成了lab0的代码
