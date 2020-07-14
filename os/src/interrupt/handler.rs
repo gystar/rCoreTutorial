@@ -2,7 +2,7 @@ use super::context::Context;
 use super::timer;
 use riscv::register::{
     scause::{Exception, Interrupt, Scause, Trap},
-    sie, stvec,
+    stvec,
 };
 global_asm!(include_str!("../interrupt.asm"));
 
