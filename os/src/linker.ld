@@ -1,4 +1,5 @@
 /* 有关 Linker Script 可以参考：https://sourceware.org/binutils/docs/ld/Scripts.html */
+/*处理内存布局*/
 /* 目标架构 */
 OUTPUT_ARCH(riscv)
 

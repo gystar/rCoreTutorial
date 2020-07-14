@@ -26,6 +26,7 @@
 
 #[macro_use]
 mod console;
+mod interrupt;
 mod panic;
 mod sbi;
 
@@ -38,6 +39,14 @@ global_asm!(include_str!("entry.asm"));
 #[no_mangle] //禁用编译期间的名称重整（Name Mangling），保证生成命为_start的函数
 pub extern "C" fn rust_main() -> ! {
     println!("Hello rCore-Tutorial.");
-    println!("Hello GuiYi.");
-    panic!("end of rust_main.")
+    println!("Hello, GuiYi.");
+    panic!("end of rust_main.");
+    //初始化各模块
+    interrupt::init();
+
+    unsafe {
+        llvm_asm!("ebreak"::::"volatile");
+    };
+
+    unreachable!();
 }
