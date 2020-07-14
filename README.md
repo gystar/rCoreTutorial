@@ -22,3 +22,9 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 
 - 终于搞定了wls2的编译环境
 -  完成了lab0的代码
+
+## 7.14 
+
+- 完成了lab1的代码
+- 完成lab1的结果在wsl2中运行
+- win10下也可以编译通过了，需要先cargo clean

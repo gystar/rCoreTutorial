@@ -2,7 +2,7 @@ use super::context::Context;
 use super::timer;
 use riscv::register::{
     scause::{Exception, Interrupt, Scause, Trap},
-    stvec,
+    sie, stvec,
 };
 global_asm!(include_str!("../interrupt.asm"));
 
@@ -42,8 +42,8 @@ pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) {
 ///
 /// 继续执行，其中 `sepc` 增加 2 字节，以跳过当前这条 `ebreak` 指令
 fn breakpoint(context: &mut Context) {
-    println!("Breakpoint at 0x{:x}", context.sepec);
-    context.sepec += 2;
+    println!("Breakpoint at 0x{:x}", context.sepc);
+    context.sepc += 2;
 }
 
 /// 处理时钟中断
@@ -56,8 +56,9 @@ fn supervisor_timer(_: &Context) {
 /// 出现未能解决的异常
 fn fault(context: &mut Context, scause: Scause, stval: usize) {
     panic!(
-        "Unresolved interrupt: {:?}\nstval: {:x}",
+        "Unresolved interrupt: {:?}\n{:x?}\nstval: {:x}",
         scause.cause(),
+        context,
         stval
     );
 }
