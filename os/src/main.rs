@@ -40,7 +40,6 @@ global_asm!(include_str!("entry.asm"));
 pub extern "C" fn rust_main() -> ! {
     println!("Hello rCore-Tutorial.");
     println!("Hello, GuiYi.");
-    panic!("end of rust_main.");
     //初始化各模块
     interrupt::init();
 
