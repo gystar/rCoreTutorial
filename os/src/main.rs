@@ -22,12 +22,20 @@
 //! - `#![feature(panic_info_message)]`  
 //!   panic! 时，获取其中的信息并打印
 #![feature(panic_info_message)]
+//!
+//! - `#![feature(alloc_error_handler)]`
+//!   我们使用了一个全局动态内存分配器，以实现原本标准库中的堆内存分配。
+//!   而语言要求我们同时实现一个错误回调，这里我们直接 panic
+#![feature(alloc_error_handler)]
 
 #[macro_use]
 mod console;
 mod interrupt;
+mod memory;
 mod panic;
 mod sbi;
+
+extern crate alloc;
 
 // 汇编编写的程序入口，具体见该文件
 global_asm!(include_str!("entry.asm"));
@@ -41,9 +49,28 @@ pub extern "C" fn rust_main() -> ! {
     println!("Hello, GuiYi.");
     //初始化各模块
     interrupt::init();
+    memory::init();
 
-    unsafe {
-        llvm_asm!("ebreak"::::"volatile");
-    };
+    //test memory allocal
+    use alloc::{boxed::Box, vec::Vec};
+    let v1 = Box::new(2);
+    assert_eq!(*v1, 2);
+    core::mem::drop(v1);
+
+    let mut vec = Vec::new();
+    for i in 0..3 {
+        vec.push(i);
+    }
+    assert_eq!(vec.len(), 3);
+
+    for (i, v) in vec.into_iter().enumerate() {
+        assert_eq!(i, v);
+    }
+
+    println!(
+        "kernel end address:{:x}",
+        memory::config::KERNEL_END_ADDRESS.0
+    );
+
     loop {}
 }
