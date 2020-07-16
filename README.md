@@ -42,3 +42,7 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 - 完成lab1的结果在wsl2中运行
 - win10下也可以编译通过了，需要先cargo clean
 - 直接用win10下的vscode来下编写代码。wsl对windows系统的文件进行了挂载，在wsl中编译并执运行结果。
+
+## 7.15
+
+- 完成了lab2的代码
