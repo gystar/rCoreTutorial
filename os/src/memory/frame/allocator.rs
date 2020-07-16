@@ -1,13 +1,8 @@
 //! 提供帧分配器 [`FRAME_ALLOCATOR`](FrameAllocator)
 //!
 //! 返回的 [`FrameTracker`] 类型代表一个帧，它在被 drop 时会自动将空间补回分配器中。
-use super::frame_tracker::FrameTracker;
-use crate::memory::{
-    address::{PhysicalAddress, PhysicalPageNumber},
-    config::*,
-    range::*,
-    MemoryResult,
-};
+use super::*;
+use crate::memory::*;
 use algorithm::*;
 use lazy_static::*;
 use spin::Mutex;

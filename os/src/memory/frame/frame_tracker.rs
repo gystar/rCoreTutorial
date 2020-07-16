@@ -1,3 +1,4 @@
+use super::allocator::FRAME_ALLOCATOR;
 /// 分配出的物理页
 ///
 /// # `Tracker` 是什么？
@@ -30,5 +31,7 @@ impl FrameTracker {
 
 /// 帧在释放时会放回 [`static@FRAME_ALLOCATOR`] 的空闲链表中
 impl Drop for FrameTracker {
-    fn drop(&mut self) {}
+    fn drop(&mut self) {
+        FRAME_ALLOCATOR.lock().dealloc(self);
+    }
 }
