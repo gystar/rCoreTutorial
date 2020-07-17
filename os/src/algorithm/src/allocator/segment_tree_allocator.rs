@@ -90,6 +90,7 @@ impl Allocator for SegTreeAllocator {
 
     /// 分配一个元素，返回被分配的单元的下标，无法分配则返回 `None`
     fn alloc(&mut self) -> Option<usize> {
+        //按照先根遍历的顺序分配单个页面，即先看当前元区间，再左边区间，再右边区间
         let mut p = 0;
         while p < self.heap.len() && self.heap[p].tags[0] {
             if !self.heap[p].tags[1] {
