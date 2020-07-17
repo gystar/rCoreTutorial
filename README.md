@@ -46,3 +46,11 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.15
 
 - 完成了lab2的代码
+
+## 7.16
+
+- 研究线段树算法
+
+## 7.16
+
+- 完成了线段树分配单个物理页的算法
