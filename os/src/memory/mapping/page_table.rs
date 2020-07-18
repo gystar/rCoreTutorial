@@ -27,6 +27,11 @@ impl PageTable {
 }
 
 pub struct PageTableTracker(pub FrameTracker);
+//FrameTracker转换为PageTable的过程：
+//->frame的PhysicalAddress
+//->frame的VirtualAddress
+//->将VirtualAddress强行转换为PageTable的裸指针
+//->使用*来得到PageTable对象
 impl core::ops::Deref for PageTableTracker {
     type Target = PageTable;
     fn deref(&self) -> &Self::Target {
