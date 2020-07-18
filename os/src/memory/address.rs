@@ -2,6 +2,7 @@
 //!
 //! 我们为虚拟地址和物理地址分别设立两种类型，利用编译器检查来防止混淆。
 use super::config::*;
+use bit_field::*;
 
 /// 虚拟地址
 #[repr(C)]
@@ -24,17 +25,51 @@ pub struct VirtualPageNumber(pub usize);
 pub struct PhysicalPageNumber(pub usize);
 
 impl PhysicalAddress {
+    /// 从物理地址经过线性映射取得 T类型的&mut 引用
+    //注意：当使用页表之后，所有的指针都是使用的虚地址，因此只能通过虚地址来得到对象
+    pub fn deref_kernel<T>(self) -> &'static mut T {
+        VirtualAddress::from(self).deref()
+    }
     //页内偏移
     fn page_offset(&self) -> usize {
         self.0 % PAGE_SIZE
     }
 }
 
-//虚地址到物理地址的转换
-//现在直接线性映射
+impl VirtualAddress {
+    /// 从虚拟地址取得某类型的 &mut 引用
+    //强转为T类型的裸指针后，获得T对象
+    pub fn deref<T>(self) -> &'static mut T {
+        unsafe { &mut *(self.0 as *mut T) }
+    }
+    //页内偏移
+    fn page_offset(&self) -> usize {
+        self.0 % PAGE_SIZE
+    }
+}
+
+//虚地址和物理地址的相互转换
+//现在暂时进行简单的线性映射
 impl From<VirtualAddress> for PhysicalAddress {
     fn from(pa: VirtualAddress) -> Self {
         Self(pa.0 - KERNEL_MAP_OFFSET)
+    }
+}
+impl From<PhysicalAddress> for VirtualAddress {
+    fn from(pa: PhysicalAddress) -> Self {
+        Self(pa.0 + KERNEL_MAP_OFFSET)
+    }
+}
+
+//虚拟页的实现
+impl VirtualPageNumber {
+    //解析得到1、2、3级虚拟页号
+    pub fn levels(&self) -> [usize; 3] {
+        [
+            self.0.get_bits(18..27),
+            self.0.get_bits(9..18),
+            self.0.get_bits(0..9),
+        ]
     }
 }
 
