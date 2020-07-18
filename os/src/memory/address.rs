@@ -3,10 +3,25 @@
 //! 我们为虚拟地址和物理地址分别设立两种类型，利用编译器检查来防止混淆。
 use super::config::*;
 
+/// 虚拟地址
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-/// 物理地址封装
+pub struct VirtualAddress(pub usize);
+
+/// 物理地址
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PhysicalAddress(pub usize);
+
+/// 虚拟页号
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct VirtualPageNumber(pub usize);
+
+/// 物理页号
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct PhysicalPageNumber(pub usize);
 
 impl PhysicalAddress {
     //页内偏移
@@ -15,33 +30,48 @@ impl PhysicalAddress {
     }
 }
 
-impl From<PhysicalPageNumber> for PhysicalAddress {
-    fn from(page: PhysicalPageNumber) -> Self {
-        Self(page.0 * PAGE_SIZE)
+//虚地址到物理地址的转换
+//现在直接线性映射
+impl From<VirtualAddress> for PhysicalAddress {
+    fn from(pa: VirtualAddress) -> Self {
+        Self(pa.0 - KERNEL_MAP_OFFSET)
     }
 }
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-///物理页封装，连续4KB大小的空间
-pub struct PhysicalPageNumber(pub usize);
+//实现PhysicalAddress和PhysicalPageNumber，以及VirtualAddress和VirtualPageNumber之间的转化
+macro_rules! implement_address_to_page_number {
+    // 这里面的类型转换实现 [`From`] trait，会自动实现相反的 [`Into`] trait
+    ($address_type: ty, $page_number_type: ty) => {
+        impl $page_number_type {
+            /// 将地址转换为页号，向下取整
+            pub const fn floor(address: $address_type) -> Self {
+                Self(address.0 / PAGE_SIZE)
+            }
+            /// 将地址转换为页号，向上取整
+            pub const fn ceil(address: $address_type) -> Self {
+                Self(address.0 / PAGE_SIZE + (address.0 % PAGE_SIZE != 0) as usize)
+            }
+        }
 
-impl PhysicalPageNumber {
-    //将物理地址转化为页地址，向下取整
-    pub fn floor(addr: PhysicalAddress) -> Self {
-        Self(addr.0 / PAGE_SIZE)
-    }
-    //将物理地址转化为页地址，向上取整
-    pub fn ceil(addr: PhysicalAddress) -> Self {
-        Self(addr.0 / PAGE_SIZE + (addr.0 % PAGE_SIZE != 0) as usize)
-    }
+        impl From<$page_number_type> for $address_type {
+            /// 从页号转换为地址
+            fn from(page_number: $page_number_type) -> Self {
+                Self(page_number.0 * PAGE_SIZE)
+            }
+        }
+        impl From<$address_type> for $page_number_type {
+            /// 从地址转换为页号，直接进行移位操作
+            ///
+            /// 不允许转换没有对齐的地址，这种情况应当使用 `floor()` 和 `ceil()`
+            fn from(address: $address_type) -> Self {
+                assert!(address.0 % PAGE_SIZE == 0);
+                Self(address.0 / PAGE_SIZE)
+            }
+        }
+    };
 }
-
-impl From<PhysicalAddress> for PhysicalPageNumber {
-    fn from(addr: PhysicalAddress) -> Self {
-        PhysicalPageNumber::floor(addr)
-    }
-}
+implement_address_to_page_number! {PhysicalAddress, PhysicalPageNumber}
+implement_address_to_page_number! {VirtualAddress, VirtualPageNumber}
 
 //为PhysicalAddress和PhysicalPageNumber实现一些常见的+ - += -= 等操作
 macro_rules! implement_usize_operations {
