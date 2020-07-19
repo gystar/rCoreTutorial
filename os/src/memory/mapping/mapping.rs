@@ -137,4 +137,16 @@ impl Mapping {
         }
         Ok(())
     }
+
+    /// 将当前的映射加载到 `satp` 寄存器
+    pub fn activate(&self) {
+        // satp 低 27 位为页号，高 4 位为模式，8 表示 Sv39
+        let new_satp = self.root_ppn.0 | (8 << 60);
+        unsafe {
+            // 将 new_satp 的值写到 satp 寄存器
+            llvm_asm!("csrw satp, $0" :: "r"(new_satp) :: "volatile");
+            // 刷新 TLB
+            llvm_asm!("sfence.vma" :::: "volatile");
+        }
+    }
 }
