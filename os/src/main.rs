@@ -72,6 +72,11 @@ pub extern "C" fn rust_main() -> ! {
         memory::config::KERNEL_END_ADDRESS.0
     );
 
+    let remap = memory::mapping::memory_set::MemorySet::new_kernel().unwrap();
+    println!("try to activate remap...");
+    remap.activate();
+    println!("remap is activated.");
+
     // 物理页分配
     for _ in 0..2 {
         let frame_0 = match memory::frame::FRAME_ALLOCATOR.lock().alloc() {

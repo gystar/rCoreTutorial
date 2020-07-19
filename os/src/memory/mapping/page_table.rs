@@ -55,3 +55,10 @@ impl PageTableTracker {
         self.0.page_number()
     }
 }
+
+impl PageTableEntry {
+    // 因为 PageTableEntry 和具体的 PageTable 之间没有生命周期关联，所以返回 'static 引用方便写代码
+    pub fn get_next_table(&self) -> &'static mut PageTable {
+        self.address().deref_kernel()
+    }
+}
