@@ -58,3 +58,8 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.18
 
 - 完成了lan3的页表和页表项的设计
+
+## 7.19
+
+- 完成了页表映射的代码
+- 参加第二次交流会
