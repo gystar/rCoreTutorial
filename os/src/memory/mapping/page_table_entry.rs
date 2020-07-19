@@ -5,6 +5,11 @@ use bitflags::*;
 #[derive(Copy, Clone, Default)]
 pub struct PageTableEntry(usize);
 
+/// Sv39 页表项中标志位的位置
+const FLAG_RANGE: core::ops::Range<usize> = 0..8;
+/// Sv39 页表项中物理页号的位置
+const PAGE_NUMBER_RANGE: core::ops::Range<usize> = 10..54;
+
 bitflags! {
     /// 页表项中的 8 个标志位
     #[derive(Default)]
@@ -30,11 +35,13 @@ bitflags! {
 
 impl PageTableEntry {
     /// 将相应页号和标志写入一个页表项
-    pub fn new(pgn: PhysicalPageNumber, flags: Flags) -> Self {
+    pub fn new(page_number: Option<PhysicalPageNumber>, mut flags: Flags) -> Self {
+        // 标志位中是否包含 Valid 取决于 page_number 是否为 Some
+        flags.set(Flags::VALID, page_number.is_some());
         Self(
             *0usize
-                .set_bits(..8, flags.bits() as usize)
-                .set_bits(10..54, pgn.into()),
+                .set_bits(FLAG_RANGE, flags.bits() as usize)
+                .set_bits(PAGE_NUMBER_RANGE, page_number.unwrap_or_default().into()),
         )
     }
     /// 获取页号

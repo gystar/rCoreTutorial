@@ -4,14 +4,15 @@ use super::{
     page_table::*,
     page_table_entry::*,
 };
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum MapType {
     /// 线性映射，操作系统使用
     Linear,
     /// 按帧分配映射
     Framed,
 }
-
+/// 一个映射片段（对应旧 tutorial 的 `MemoryArea`）
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Segment {
     /// 映射类型
     pub map_type: MapType,

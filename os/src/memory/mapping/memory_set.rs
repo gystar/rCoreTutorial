@@ -63,12 +63,11 @@ impl MemorySet {
         ];
         let mut mapping = Mapping::new()?;
 
-        let mut i = 0;
         // 每个字段在页表中进行映射
         for segment in segments.iter() {
+            // 同时将新分配的映射关系保存到 allocated_pairs 中
             mapping.map(segment, None)?;
         }
-        println!("All the sections are mapped.");
         Ok(MemorySet { mapping, segments })
     }
 
