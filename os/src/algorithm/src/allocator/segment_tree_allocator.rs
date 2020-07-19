@@ -5,8 +5,6 @@ use super::Allocator;
 use alloc::{collections::vec_deque::VecDeque, vec::Vec};
 
 struct SegTreeNode {
-    l: usize,
-    h: usize,
     position: usize, //当前单元区间，用其下限表示
     tags: [bool; 3], //标识区间是否已经占满 0:当前元区间;1:整个左边的区间段;2:右边区间段
 }
@@ -31,34 +29,26 @@ impl Allocator for SegTreeAllocator {
         }
 
         //用一个队列来建堆
-        let mut queue = VecDeque::<SegTreeNode>::new();
-        queue.push_back(SegTreeNode {
-            l: 0,
-            h: m,
-            position: (0 + m) >> 1,
-            tags: [false; 3],
-        });
+        struct Section {
+            l: usize,
+            h: usize,
+        }
+        let mut queue = VecDeque::<(Section)>::new();
+        queue.push_back(Section { l: 0, h: m });
         while !queue.is_empty() {
-            let node = queue.pop_front().unwrap();
-            let l = node.l;
-            let h = node.h;
+            let st = queue.pop_front().unwrap();
+            let l = st.l;
+            let h = st.h;
             let mid = (l + h) >> 1;
-            vec.push(node);
+            vec.push(SegTreeNode {
+                position: mid,
+                tags: [false; 3],
+            });
             if l < mid {
-                queue.push_back(SegTreeNode {
-                    l,
-                    h: mid,
-                    position: (l + mid) >> 1,
-                    tags: [false; 3],
-                });
+                queue.push_back(Section { l, h: mid });
             }
             if mid + 1 < h {
-                queue.push_back(SegTreeNode {
-                    l: mid + 1,
-                    h,
-                    position: (mid + 1 + h) >> 1,
-                    tags: [false; 3],
-                });
+                queue.push_back(Section { l: mid + 1, h });
             }
         }
 
