@@ -54,3 +54,7 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.16
 
 - 完成了线段树分配单个物理页的算法
+
+## 7.18
+
+- 完成了lan3的页表和页表项的设计
