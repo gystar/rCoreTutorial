@@ -5,7 +5,6 @@ use super::Allocator;
 use alloc::{collections::vec_deque::VecDeque, vec::Vec};
 
 struct SegTreeNode {
-    position: usize, //当前单元区间，用其下限表示
     tags: [bool; 3], //标识区间是否已经占满 0:当前元区间;1:整个左边的区间段;2:右边区间段
 }
 pub struct SegTreeAllocator {
@@ -24,7 +23,7 @@ impl Allocator for SegTreeAllocator {
         let mut m = 1;
         let mut k: usize = 2;
         while m < size + 1 {
-            k = k << 1;
+            k = k * 2;
             m = k - 1;
         }
 
@@ -33,17 +32,19 @@ impl Allocator for SegTreeAllocator {
             l: usize,
             h: usize,
         }
+        let mut odds = Vec::<usize>::new();
         let mut queue = VecDeque::<(Section)>::new();
         queue.push_back(Section { l: 0, h: m });
         while !queue.is_empty() {
             let st = queue.pop_front().unwrap();
             let l = st.l;
             let h = st.h;
-            let mid = (l + h) >> 1;
-            vec.push(SegTreeNode {
-                position: mid,
-                tags: [false; 3],
-            });
+            let mid = (l + h) / 2;
+            //临时存放多余添加的结点的下标，方便后面更新状态
+            if mid > size {
+                odds.push(vec.len());
+            }
+            vec.push(SegTreeNode { tags: [false; 3] });
             if l < mid {
                 queue.push_back(Section { l, h: mid });
             }
@@ -58,10 +59,8 @@ impl Allocator for SegTreeAllocator {
             vec[i].tags[2] = true;
         }
         //对于添加的额外单元区间，current的tag初始化为true
-        for i in 0..m {
-            if vec[i].position > size {
-                vec[i].tags[0] = true;
-            }
+        for i in odds {
+            vec[i].tags[0] = true;
         }
         //自底向上调整非叶子结点的左右孩子域的tag
         //序号从0开始，则左右孩子分别是i*2+1和i*2+2
@@ -82,11 +81,18 @@ impl Allocator for SegTreeAllocator {
     fn alloc(&mut self) -> Option<usize> {
         //按照先根遍历的顺序分配单个页面，即先看当前元区间，再左边区间，再右边区间
         let mut p = 0;
+        //使用l、h来记录大区间的上下边界，从而计算出应该分配的单元区间，可以省略结点中对当前单元区间的存储
+        let mut l = 0;
+        let mut h = self.heap.len();
         while p < self.heap.len() && self.heap[p].tags[0] {
             if !self.heap[p].tags[1] {
+                //往左
                 p = p * 2 + 1;
+                h = (l + h) / 2;
             } else {
+                //往右
                 p = p * 2 + 2;
+                l = (l + h) / 2 + 1;
             }
         }
         if p < self.heap.len() {
@@ -105,7 +111,7 @@ impl Allocator for SegTreeAllocator {
                 }
                 p1 = p2;
             }
-            Some(self.heap[p].position)
+            Some((l + h) / 2)
         } else {
             None
         }
@@ -116,18 +122,26 @@ impl Allocator for SegTreeAllocator {
             //println!("try to dealloc an invalid page index.");
             return;
         }
+
         let mut p = 0;
-        while self.heap[p].position != index {
-            if index < self.heap[p].position {
+        let mut l = 0;
+        let mut h = self.heap.len();
+        let mut st = (l + h) / 2; //当前单元区间
+        while st != index {
+            if index < st {
                 //左边的区间必然没有满
                 self.heap[p].tags[1] = false;
                 p = p * 2 + 1;
+                h = st;
             } else {
                 //右边的区间必然没有满
                 self.heap[p].tags[2] = false;
                 p = p * 2 + 2;
+                l = st + 1;
             }
+            st = (l + h) / 2;
         }
+        //更新当前单元区间为未占用状态
         self.heap[p].tags[0] = false;
     }
 }
