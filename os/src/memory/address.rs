@@ -36,6 +36,13 @@ impl PhysicalAddress {
     }
 }
 
+impl PhysicalPageNumber {
+    /// 从物理地址经过线性映射取得页面
+    pub fn deref_kernel(self) -> &'static mut [u8; PAGE_SIZE] {
+        PhysicalAddress::from(self).deref_kernel()
+    }
+}
+
 impl VirtualAddress {
     /// 从虚拟地址取得某类型的 &mut 引用
     //强转为T类型的裸指针后，获得T对象
