@@ -48,13 +48,27 @@ impl VirtualAddress {
     }
 }
 
-//虚地址和物理地址的相互转换
-//现在暂时进行简单的线性映射
+///虚地址和物理地址的相互转换
+///现在暂时进行简单的线性映射
+// 虚实页号之间的线性映射
+impl From<PhysicalPageNumber> for VirtualPageNumber {
+    fn from(ppn: PhysicalPageNumber) -> Self {
+        Self(ppn.0 + KERNEL_MAP_OFFSET / PAGE_SIZE)
+    }
+}
+// 虚实页号之间的线性映射
+impl From<VirtualPageNumber> for PhysicalPageNumber {
+    fn from(vpn: VirtualPageNumber) -> Self {
+        Self(vpn.0 - KERNEL_MAP_OFFSET / PAGE_SIZE)
+    }
+}
+// 虚实地址之间的线性映射
 impl From<VirtualAddress> for PhysicalAddress {
     fn from(pa: VirtualAddress) -> Self {
         Self(pa.0 - KERNEL_MAP_OFFSET)
     }
 }
+// 虚实地址之间的线性映射
 impl From<PhysicalAddress> for VirtualAddress {
     fn from(pa: PhysicalAddress) -> Self {
         Self(pa.0 + KERNEL_MAP_OFFSET)
@@ -172,3 +186,5 @@ macro_rules! implement_usize_operations {
 }
 implement_usize_operations! {PhysicalAddress}
 implement_usize_operations! {PhysicalPageNumber}
+implement_usize_operations! {VirtualAddress}
+implement_usize_operations! {VirtualPageNumber}
