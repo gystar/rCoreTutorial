@@ -63,3 +63,4 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 
 - 完成了页表映射的代码
 - 参加第二次交流会
+- 改进线段树分配算法：每个物理页只占用3bit，原来每个占用18B+3bit
