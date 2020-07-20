@@ -85,8 +85,8 @@ impl Thread {
             inner: Mutex::new(ThreadInner {
                 context: Some(context),
                 sleeping: false,
-                //descriptors: vec![STDIN.clone(), STDOUT.clone()],
                 dead: false,
+                //descriptors: vec![STDIN.clone(), STDOUT.clone()],
             }),
         });
 
@@ -95,26 +95,6 @@ impl Thread {
 
     pub fn inner(&self) -> spin::MutexGuard<ThreadInner> {
         self.inner.lock()
-    }
-
-    /// 准备执行一个线程
-    ///
-    /// 激活对应进程的页表，并返回其 Context
-    pub fn run(&self) -> *mut Context {
-        // 激活页表
-        self.process.read().memory_set.activate();
-        // 取出 Context
-        let parked_frame = self.inner().context.take().unwrap();
-
-        if self.process.read().is_user {
-            // 用户线程则将 Context 放至内核栈顶
-            unsafe { KERNEL_STACK.push_context(parked_frame) }
-        } else {
-            // 内核线程则将 Context 放至 sp 下
-            let context = (parked_frame.sp() - core::mem::size_of::<Context>()) as *mut Context;
-            unsafe { *context = parked_frame };
-            context
-        }
     }
 }
 

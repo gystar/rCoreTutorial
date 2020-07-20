@@ -41,6 +41,10 @@ mod process;
 mod sbi;
 
 extern crate alloc;
+use process::*;
+use spin::RwLock;
+
+use alloc::sync::Arc;
 
 // 汇编编写的程序入口，具体见该文件
 global_asm!(include_str!("entry.asm"));
@@ -62,14 +66,22 @@ pub extern "C" fn rust_main() -> ! {
     remap.activate();
     println!("remap is activated.");
     */
-    use process::*;
+
     {
+        let kernel_process = Process::new_kernel().unwrap();
+        let mut processor = PROCESSOR.get();
         for message in 0..8 {
-            start_kernel_thread(sample_process as usize, Some(&[message]));
+            processor.add_thread(create_kernel_thread(
+                kernel_process.clone(),
+                sample_process as usize,
+                Some(&[message]),
+            ));
         }
     }
 
-    PROCESSOR.get().run();
+    unsafe {
+        PROCESSOR.unsafe_get().run();
+    }
 }
 
 fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
@@ -79,8 +91,24 @@ fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
     PROCESSOR.get().add_thread(thread);
 }
 
-fn test_kernel_thread(id: usize) {
-    println!("hello from kernel thread {}", id);
+/// 创建一个内核进程
+pub fn create_kernel_thread(
+    process: Arc<RwLock<Process>>,
+    entry_point: usize,
+    arguments: Option<&[usize]>,
+) -> Arc<Thread> {
+    // 创建线程
+    let thread = Thread::new(process, entry_point, arguments).unwrap();
+    // 设置线程的返回地址为 kernel_thread_exit
+    thread
+        .as_ref()
+        .inner()
+        .context
+        .as_mut()
+        .unwrap()
+        .set_ra(kernel_thread_exit as usize);
+
+    thread
 }
 
 fn sample_process(message: usize) {
