@@ -7,7 +7,7 @@ use lazy_static::*;
 
 lazy_static! {
     /// 全局的 [`Processor`]
-    pub static ref PROCESSOR: Lock<Processor> = Lock::new(Processor::default());
+    pub static ref PROCESSOR: UnsafeWrapper<Processor> = Default::default();
 }
 
 /// 线程调度和管理
@@ -112,14 +112,14 @@ impl Processor {
         if self.current_thread.is_none() {
             self.current_thread = Some(thread.clone());
         }
-        self.scheduler.add_thread(thread);
+        self.scheduler.add_thread(thread, 0);
     }
 
     /// 唤醒一个休眠线程
     pub fn wake_thread(&mut self, thread: Arc<Thread>) {
         thread.inner().sleeping = false;
         self.sleeping_threads.remove(&thread);
-        self.scheduler.add_thread(thread);
+        self.scheduler.add_thread(thread, 0);
     }
 
     /// 保存当前线程的 `Context`
@@ -143,5 +143,27 @@ impl Processor {
         // 从调度器中移除
         let thread = self.current_thread.take().unwrap();
         self.scheduler.remove_thread(&thread);
+    }
+    ///实验4代码：
+    /// 在一个时钟中断时，替换掉 context
+    pub fn tick(&mut self, context: &mut Context) -> *mut Context {
+        // 向调度器询问下一个线程
+        if let Some(next_thread) = self.scheduler.get_next() {
+            if next_thread == self.current_thread() {
+                // 没有更换线程，直接返回 Context
+                println!("there is not any thread.");
+                context
+            } else {
+                // 准备下一个线程
+                let next_context = next_thread.run();
+                let current_thread = self.current_thread.replace(next_thread).unwrap();
+                // 储存当前线程 Context
+                current_thread.park(*context);
+                // 返回下一个线程的 Context
+                next_context
+            }
+        } else {
+            panic!("all threads terminated, shutting down");
+        }
     }
 }

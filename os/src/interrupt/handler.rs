@@ -1,5 +1,6 @@
 use super::context::Context;
 use super::timer;
+use crate::process::PROCESSOR;
 use riscv::register::{
     scause::{Exception, Interrupt, Scause, Trap},
     stvec,
@@ -26,6 +27,16 @@ pub fn init() {
 /// 具体的中断类型需要根据 scause 来推断，然后分别处理
 #[no_mangle]
 pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) {
+    // 首先检查线程是否已经结束（内核线程会自己设置标记来结束自己）
+    {
+        let mut processor = PROCESSOR.get();
+        let current_thread = processor.current_thread();
+        if current_thread.as_ref().inner().dead {
+            println!("thread {} exit", current_thread.id);
+            processor.kill_current_thread();
+            return;
+        }
+    }
     // 可以通过 Debug 来查看发生了什么中断
     // println!("{:x?}", context.scause.cause());
     match scause.cause() {
@@ -51,8 +62,9 @@ fn breakpoint(context: &mut Context) {
 /// 处理时钟中断
 ///
 /// 目前只会在 [`timer`] 模块中进行计数
-fn supervisor_timer(_: &Context) {
+fn supervisor_timer(context: &mut Context) {
     timer::tick();
+    PROCESSOR.get().tick(context);
 }
 
 /// 出现未能解决的异常

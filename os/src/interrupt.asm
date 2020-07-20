@@ -13,13 +13,19 @@
 # 进入中断
 # 保存 Context 并且进入 Rust 中的中断处理函数 interrupt::handler::handle_interrupt()
 __interrupt:
-    # 在栈上开辟 Context 所需的空间
-    addi    sp, sp, -34*8
+    # 因为线程当前的栈不一定可用，必须切换到内核栈来保存 Context 并进行中断流程
+    # 因此，我们使用 sscratch 寄存器保存内核栈地址
+    # 思考：sscratch 的值最初是在什么地方写入的？
+
+    # 交换 sp 和 sscratch（切换到内核栈）
+    csrrw   sp, sscratch, sp
+    # 在内核栈开辟 Context 的空间
+    addi    sp, sp, -36*8
 
     # 保存通用寄存器，除了 x0（固定为 0）
     SAVE    x1, 1
-    # 将原来的 sp（sp 又名 x2）写入 2 位置
-    addi    x1, sp, 34*8
+    # 将本来的栈地址 sp（即 x2）保存
+    csrr    x1, sscratch
     SAVE    x1, 2
     # 其他通用寄存器
     SAVE    x3, 3
@@ -53,11 +59,10 @@ __interrupt:
     SAVE    x31, 31
 
     # 取出 CSR 并保存
-    csrr    s1, sstatus
-    csrr    s2, sepc
-    SAVE    s1, 32
-    SAVE    s2, 33
-
+    csrr    t0, sstatus
+    csrr    t1, sepc
+    SAVE    t0, 32
+    SAVE    t1, 33
     # 调用 handle_interrupt，传入参数
     # context: &mut Context
     mv      a0, sp
@@ -69,13 +74,21 @@ __interrupt:
 
     .globl __restore
 # 离开中断
-# 从 Context 中恢复所有寄存器，并跳转至 Context 中 sepc 的位置
+# 此时内核栈顶被推入了一个 Context，而 a0 指向它
+# 接下来从 Context 中恢复所有寄存器，并将 Context 出栈（用 sscratch 记录内核栈地址）
+# 最后跳转至恢复的 sepc 的位置
 __restore:
+    # 从 a0 中读取 sp
+    # 思考：a0 是在哪里被赋值的？（有两种情况）
+    mv      sp, a0
     # 恢复 CSR
-    LOAD    s1, 32
-    LOAD    s2, 33
-    csrw    sstatus, s1
-    csrw    sepc, s2
+    LOAD    t0, 32
+    LOAD    t1, 33
+    csrw    sstatus, t0
+    csrw    sepc, t1
+    # 将内核栈地址写入 sscratch
+    addi    t0, sp, 36*8
+    csrw    sscratch, t0
 
     # 恢复通用寄存器
     LOAD    x1, 1

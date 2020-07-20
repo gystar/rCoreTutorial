@@ -38,7 +38,8 @@ pub fn init() {
         sie::set_stimer();
         // sstatus 寄存器中的 SIE 位（不是 sie 寄存器），允许内核态被中断打断
         // 无论 SIE 位为什么值，中断都可以打断用户态的线程
-        sstatus::set_sie();
+        //实验4代码：我们会在线程开始运行时开启中断，而在操作系统初始化的过程中是不应该有中断的
+        //sstatus::set_sie();
     }
     // 设置下一次时钟中断
     set_next_timeout();
