@@ -84,3 +84,25 @@ impl core::fmt::Debug for PageTableEntry {
             .finish()
     }
 }
+
+macro_rules! implement_flags {
+    ($field: ident, $name: ident, $quote: literal) => {
+        impl Flags {
+            #[doc = "返回 `Flags::"]
+            #[doc = $quote]
+            #[doc = "` 或 `Flags::empty()`"]
+            pub fn $name(value: bool) -> Flags {
+                if value {
+                    Flags::$field
+                } else {
+                    Flags::empty()
+                }
+            }
+        }
+    };
+}
+
+implement_flags! {USER, user, "USER"}
+implement_flags! {READABLE, readable, "READABLE"}
+implement_flags! {WRITABLE, writable, "WRITABLE"}
+implement_flags! {EXECUTABLE, executable, "EXECUTABLE"}

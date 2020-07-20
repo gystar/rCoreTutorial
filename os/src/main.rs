@@ -37,6 +37,7 @@ mod console;
 mod interrupt;
 mod memory;
 mod panic;
+mod process;
 mod sbi;
 
 extern crate alloc;
