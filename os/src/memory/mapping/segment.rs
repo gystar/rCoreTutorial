@@ -1,9 +1,10 @@
 ///内存段的封装
 use super::{
     super::{address::*, range::*},
-    page_table::*,
     page_table_entry::*,
 };
+
+#[allow(unused)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum MapType {
     /// 线性映射，操作系统使用
@@ -22,6 +23,7 @@ pub struct Segment {
     pub flags: Flags,
 }
 
+#[allow(unused)]
 impl Segment {
     /// 将地址相应地上下取整，获得虚拟页号区间
     pub fn page_range(&self) -> Range<VirtualPageNumber> {

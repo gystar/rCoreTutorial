@@ -33,7 +33,7 @@ impl Allocator for SegTreeAllocator {
             h: usize,
         }
         let mut odds = Vec::<usize>::new();
-        let mut queue = VecDeque::<(Section)>::new();
+        let mut queue = VecDeque::<Section>::new();
         queue.push_back(Section { l: 0, h: m });
         while !queue.is_empty() {
             let st = queue.pop_front().unwrap();

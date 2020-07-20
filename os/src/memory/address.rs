@@ -24,6 +24,7 @@ pub struct VirtualPageNumber(pub usize);
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PhysicalPageNumber(pub usize);
 
+#[allow(unused)]
 impl PhysicalAddress {
     /// 从物理地址经过线性映射取得 T类型的&mut 引用
     //注意：当使用页表之后，所有的指针都是使用的虚地址，因此只能通过虚地址来得到对象
@@ -43,6 +44,7 @@ impl PhysicalPageNumber {
     }
 }
 
+#[allow(unused)]
 impl VirtualAddress {
     /// 从虚拟地址取得某类型的 &mut 引用
     //强转为T类型的裸指针后，获得T对象

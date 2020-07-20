@@ -17,6 +17,7 @@ impl<T: From<usize> + Into<usize> + Copy, U: Into<T>> From<core::ops::Range<U>> 
     }
 }
 
+#[allow(unused)]
 impl<T: From<usize> + Into<usize> + Copy> Range<T> {
     /// 检测两个 [`Range`] 是否存在重合的区间
     pub fn overlap_with(&self, other: &Range<T>) -> bool {

@@ -33,6 +33,7 @@ bitflags! {
     }
 }
 
+#[allow(unused)]
 impl PageTableEntry {
     /// 将相应页号和标志写入一个页表项
     pub fn new(page_number: Option<PhysicalPageNumber>, mut flags: Flags) -> Self {
@@ -43,6 +44,10 @@ impl PageTableEntry {
                 .set_bits(FLAG_RANGE, flags.bits() as usize)
                 .set_bits(PAGE_NUMBER_RANGE, page_number.unwrap_or_default().into()),
         )
+    }
+    /// 清除
+    pub fn clear(&mut self) {
+        self.0 = 0;
     }
     /// 获取页号
     pub fn page_number(&self) -> PhysicalPageNumber {
@@ -59,6 +64,13 @@ impl PageTableEntry {
     /// 是否为空（可能非空也非 Valid）
     pub fn is_empty(&self) -> bool {
         self.0 == 0
+    }
+    /// 是否指向下一级（RWX 全为0）
+    pub fn has_next_level(&self) -> bool {
+        let flags = self.flags();
+        !(flags.contains(Flags::READABLE)
+            || flags.contains(Flags::WRITABLE)
+            || flags.contains(Flags::EXECUTABLE))
     }
 }
 
