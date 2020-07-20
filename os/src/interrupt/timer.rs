@@ -23,7 +23,7 @@ pub fn tick() {
     set_next_timeout();
     unsafe {
         TICKS += 1;
-        if TICKS % 1000 == 0 {
+        if TICKS % 5000 == 0 {
             println!("{} tick", TICKS);
         }
     }
