@@ -56,6 +56,7 @@ pub struct Processor {
     sleeping_threads: HashSet<Arc<Thread>>,
 }
 
+#[allow(unused)]
 impl Processor {
     /// 获取一个当前线程的 `Arc` 引用
     pub fn current_thread(&self) -> Arc<Thread> {
