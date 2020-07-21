@@ -49,7 +49,7 @@ impl Mapping {
                 let new_table = PageTableTracker::new(FRAME_ALLOCATOR.lock().alloc()?);
                 let new_ppn = new_table.page_number();
                 // 将新页表的页号写入当前的页表项
-                *entry = PageTableEntry::new(Some(new_ppn), Flags::VALID);
+                *entry = PageTableEntry::new(new_ppn, Flags::VALID);
                 // 保存页表
                 self.page_tables.push(new_table);
             }
@@ -64,7 +64,7 @@ impl Mapping {
     fn map_one(
         &mut self,
         vpn: VirtualPageNumber,
-        ppn: Option<PhysicalPageNumber>,
+        ppn: PhysicalPageNumber,
         flags: Flags,
     ) -> MemoryResult<()> {
         // 定位到页表项
@@ -87,7 +87,7 @@ impl Mapping {
             // 线性映射，直接对虚拟地址进行转换
             MapType::Linear => {
                 for vpn in segment.page_range().iter() {
-                    self.map_one(vpn, Some(vpn.into()), segment.flags | Flags::VALID)?;
+                    self.map_one(vpn, vpn.into(), segment.flags | Flags::VALID)?;
                 }
                 // 拷贝数据
                 if let Some(data) = init_data {
@@ -106,7 +106,7 @@ impl Mapping {
                     // 分配物理页面
                     let mut frame = FRAME_ALLOCATOR.lock().alloc()?;
                     // 映射，填充 0，记录
-                    self.map_one(vpn, Some(frame.page_number()), segment.flags | Flags::VALID)?;
+                    self.map_one(vpn, frame.page_number(), segment.flags | Flags::VALID)?;
                     frame.fill(0);
                     allocated_pairs.push((vpn, frame));
                 }

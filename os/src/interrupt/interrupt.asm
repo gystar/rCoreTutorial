@@ -21,13 +21,12 @@ __interrupt:
     csrrw   sp, sscratch, sp
     # 在内核栈开辟 Context 的空间
     addi    sp, sp, -36*8
-
+    
     # 保存通用寄存器，除了 x0（固定为 0）
     SAVE    x1, 1
     # 将本来的栈地址 sp（即 x2）保存
     csrr    x1, sscratch
     SAVE    x1, 2
-    # 其他通用寄存器
     SAVE    x3, 3
     SAVE    x4, 4
     SAVE    x5, 5
@@ -70,7 +69,7 @@ __interrupt:
     csrr    a1, scause
     # stval: usize
     csrr    a2, stval
-    jal  handle_interrupt
+    jal handle_interrupt
 
     .globl __restore
 # 离开中断

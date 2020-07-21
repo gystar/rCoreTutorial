@@ -32,6 +32,6 @@ pub use stacked_allocator::StackedAllocator;
 
 /// 默认使用的分配器
 //单个物理页的分配器
-pub type AllocatorImpl = SegTreeAllocator;
+pub type AllocatorImpl = StackedAllocator;
 //
 pub type VectorAllocatorImpl = BitmapVectorAllocator;

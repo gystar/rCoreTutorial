@@ -61,20 +61,15 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
     println!("Hello rCore-Tutorial.");
     println!("Hello, GuiYi.");
     //初始化各模块
-    interrupt::init();
     memory::init();
+    interrupt::init();
+    drivers::init(dtb_pa);
+    fs::init();
     println!(
         "kernel end:{:x}, dtb:{}",
         PhysicalAddress::from(*memory::KERNEL_END_ADDRESS).0,
         dtb_pa
     );
-
-    /*
-    let remap = memory::mapping::memory_set::MemorySet::new_kernel().unwrap();
-    println!("try to activate remap...");
-    remap.activate();
-    println!("remap is activated.");
-    */
 
     {
         let kernel_process = Process::new_kernel().unwrap();

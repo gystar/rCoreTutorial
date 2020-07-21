@@ -1,14 +1,20 @@
-use super::{
-    super::{address::*, config::*, frame::FrameTracker, range::Range, MemoryResult},
-    mapping::Mapping,
-    page_table_entry::Flags,
-    segment::*,
+//! 一个线程中关于内存空间的所有信息 [`MemorySet`]
+//!
+
+use crate::memory::{
+    address::*,
+    config::*,
+    frame::FrameTracker,
+    mapping::{Flags, MapType, Mapping, Segment},
+    range::Range,
+    MemoryResult,
 };
-///我们需要把内核的每个段根据不同的属性写入上面的封装的 Mapping 中，
-///并把它作为一个新的结构 MemorySet 给后面的线程的概念使用，
-///这意味着：每个线程（到目前为止你可以大致理解为自己电脑中的同时工作的应用程序们）将会拥有一个 MemorySet，
-///其中存的将会是「它看到的虚拟内存空间分成的内存段」和「这些段中包含的虚拟页到物理页的映射」
 use alloc::{vec, vec::Vec};
+use xmas_elf::{
+    program::{SegmentData, Type},
+    ElfFile,
+};
+
 /// 一个进程所有关于内存空间管理的信息
 pub struct MemorySet {
     /// 维护页表和映射关系
@@ -33,11 +39,11 @@ impl MemorySet {
         // 建立字段
         let segments = vec![
             // DEVICE 段，rw-
-            //Segment {
-            //    map_type: MapType::Linear,
-            //    range: Range::from(DEVICE_START_ADDRESS..DEVICE_END_ADDRESS),
-            //    flags: Flags::READABLE | Flags::WRITABLE,
-            //},
+            Segment {
+                map_type: MapType::Linear,
+                range: Range::from(DEVICE_START_ADDRESS..DEVICE_END_ADDRESS),
+                flags: Flags::READABLE | Flags::WRITABLE,
+            },
             // .text 段，r-x
             Segment {
                 map_type: MapType::Linear,
@@ -85,6 +91,51 @@ impl MemorySet {
         })
     }
 
+    /// 通过 elf 文件创建内存映射（不包括栈）
+    // todo: 有可能不同的字段出现在同一页？
+    pub fn from_elf(file: &ElfFile, is_user: bool) -> MemoryResult<MemorySet> {
+        // 建立带有内核映射的 MemorySet
+        let mut memory_set = MemorySet::new_kernel()?;
+
+        // 遍历 elf 文件的所有部分
+        for program_header in file.program_iter() {
+            if program_header.get_type() != Ok(Type::Load) {
+                continue;
+            }
+            // 从每个字段读取「起始地址」「大小」和「数据」
+            let start = VirtualAddress(program_header.virtual_addr() as usize);
+            let size = program_header.mem_size() as usize;
+            let data: &[u8] =
+                if let SegmentData::Undefined(data) = program_header.get_data(file).unwrap() {
+                    data
+                } else {
+                    return Err("unsupported elf format");
+                };
+
+            // 将每一部分作为 Segment 进行映射
+            let segment = Segment {
+                map_type: MapType::Framed,
+                range: Range::from(start..(start + size)),
+                flags: Flags::user(is_user)
+                    | Flags::readable(program_header.flags().is_read())
+                    | Flags::writable(program_header.flags().is_write())
+                    | Flags::executable(program_header.flags().is_execute()),
+            };
+
+            // 建立映射并复制数据
+            memory_set.add_segment(segment, Some(data))?;
+        }
+
+        Ok(memory_set)
+    }
+
+    /// 替换 `satp` 以激活页表
+    ///
+    /// 如果当前页表就是自身，则不会替换，但仍然会刷新 TLB。
+    pub fn activate(&self) {
+        self.mapping.activate();
+    }
+
     /// 添加一个 [`Segment`] 的内存映射
     pub fn add_segment(&mut self, segment: Segment, init_data: Option<&[u8]>) -> MemoryResult<()> {
         // 检测 segment 没有重合
@@ -123,12 +174,5 @@ impl MemorySet {
             }
         }
         false
-    }
-
-    /// 替换 `satp` 以激活页表
-    ///
-    /// 如果当前页表就是自身，则不会替换，但仍然会刷新 TLB。
-    pub fn activate(&self) {
-        self.mapping.activate()
     }
 }

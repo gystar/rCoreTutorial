@@ -71,3 +71,51 @@ macro_rules! println_d {
         $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
     }
 }
+
+/// 类似 `std::dbg` 宏
+///
+/// 可以实现方便的对变量输出的效果
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! dbg {
+    () => {
+        println!("[{}:{}]", file!(), line!());
+    };
+    ($val:expr) => {
+        match $val {
+            tmp => {
+                println!("[{}:{}] {} = {:#?}",
+                    file!(), line!(), stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
+    ($val:expr,) => { $crate::dbg!($val) };
+    ($($val:expr),+ $(,)?) => {
+        ($($crate::dbg!($val)),+,)
+    };
+}
+
+/// 类似 `std::dbg` 宏（16 进制输出）
+///
+/// 可以实现方便的对变量输出的效果（16 进制输出）
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! dbgx {
+    () => {
+        println!("[{}:{}]", file!(), line!());
+    };
+    ($val:expr) => {
+        match $val {
+            tmp => {
+                println!("[{}:{}] {} = {:#x?}",
+                    file!(), line!(), stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
+    ($val:expr,) => { dbgx!($val) };
+    ($($val:expr),+ $(,)?) => {
+        ($(dbgx!($val)),+,)
+    };
+}
