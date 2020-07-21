@@ -48,6 +48,10 @@ impl VectorAllocator for BuddyAllocator {
 
     fn alloc(&mut self, size: usize, align: usize) -> Option<usize> {
         let (k, block_size) = uper_bound_power(size);
+        assert_eq!(
+            block_size, size,
+            "Try to alloc a block which is not a pow of 2."
+        );
         for index in k..self.blocks.len() {
             if self.blocks[index].clone().is_empty() {
                 continue;
