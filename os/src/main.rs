@@ -35,7 +35,9 @@
 #[macro_use]
 mod console;
 mod drivers;
+mod fs;
 mod interrupt;
+mod kernel;
 mod memory;
 mod panic;
 mod process;
