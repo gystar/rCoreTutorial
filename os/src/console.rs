@@ -61,3 +61,13 @@ macro_rules! println {
         $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
     }
 }
+
+/// 比println会多打印一下文件名和行号
+///
+/// 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
+macro_rules! println_d {
+    ($fmt: literal $(, $($arg: tt)+)?) => {
+        print!("[{} {}]", file!(),line!());
+        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
+    }
+}
