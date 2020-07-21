@@ -1,6 +1,7 @@
 //! 负责分配 / 回收的数据结构
 
 mod bitmap_vector_allocator;
+mod buddy_vector_allocator;
 mod segment_tree_allocator;
 mod stacked_allocator;
 

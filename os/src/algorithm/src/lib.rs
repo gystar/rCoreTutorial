@@ -3,6 +3,7 @@
 //! 以及有多种实现，会留作业的数据结构
 #![no_std]
 #![feature(drain_filter)]
+#![feature(linked_list_remove)]
 
 extern crate alloc;
 
