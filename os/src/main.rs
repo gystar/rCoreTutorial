@@ -41,6 +41,7 @@ mod process;
 mod sbi;
 
 extern crate alloc;
+use memory::*;
 use process::*;
 use spin::RwLock;
 
@@ -53,12 +54,17 @@ global_asm!(include_str!("entry.asm"));
 ///
 /// 在 `_start` 为我们进行了一系列准备之后，这是第一个被调用的 Rust 函数
 #[no_mangle] //禁用编译期间的名称重整（Name Mangling），保证生成命为_start的函数
-pub extern "C" fn rust_main() -> ! {
+pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
     println!("Hello rCore-Tutorial.");
     println!("Hello, GuiYi.");
     //初始化各模块
     interrupt::init();
     memory::init();
+    println!(
+        "kernel end:{:x}, dtb:{}",
+        PhysicalAddress::from(*memory::KERNEL_END_ADDRESS).0,
+        dtb_pa
+    );
 
     /*
     let remap = memory::mapping::memory_set::MemorySet::new_kernel().unwrap();
@@ -82,13 +88,6 @@ pub extern "C" fn rust_main() -> ! {
     unsafe {
         PROCESSOR.unsafe_get().run();
     }
-}
-
-fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
-    use process::*;
-    let process = Process::new_kernel().unwrap();
-    let thread = Thread::new(process, entry_point, arguments).unwrap();
-    PROCESSOR.get().add_thread(thread);
 }
 
 /// 创建一个内核进程
