@@ -79,3 +79,4 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 
 - 完成实验指导6，加载用户程序并运行notebook程序
 - 为每个lab创建本地和远程分支。
+- 实现实验1的内容：将物理页的分配信息放在物理页中
