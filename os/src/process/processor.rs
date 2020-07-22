@@ -113,14 +113,14 @@ impl Processor {
         if self.current_thread.is_none() {
             self.current_thread = Some(thread.clone());
         }
-        self.scheduler.add_thread(thread);
+        self.scheduler.add_thread(thread, 0);
     }
 
     /// 唤醒一个休眠线程
     pub fn wake_thread(&mut self, thread: Arc<Thread>) {
         thread.inner().sleeping = false;
         self.sleeping_threads.remove(&thread);
-        self.scheduler.add_thread(thread);
+        self.scheduler.add_thread(thread, 0);
     }
 
     /// 保存当前线程的 `Context`

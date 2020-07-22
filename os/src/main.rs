@@ -53,6 +53,8 @@ use process::*;
 use spin::RwLock;
 
 use alloc::sync::Arc;
+use fs::{INodeExt, ROOT_INODE};
+use xmas_elf::ElfFile;
 
 // 汇编编写的程序入口，具体见该文件
 global_asm!(include_str!("entry.asm"));
@@ -75,30 +77,31 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         dtb_pa
     );
 
+    /*
     {
         let kernel_process = Process::new_kernel().unwrap();
         let mut processor = PROCESSOR.get();
-        for message in 0..8 {
-            processor.add_thread(create_kernel_thread(
-                kernel_process.clone(),
-                sample_process as usize,
-                Some(&[message]),
-            ));
-        }
+
+        processor.add_thread(create_kernel_thread(
+            kernel_process.clone(),
+            sample_process as usize,
+            Some(&[777]),
+        ));
+
+        processor.add_thread(create_user_process("hello_world"));
+        processor.add_thread(create_user_process("notebook"));
     }
+    */
+    //start_kernel_thread(sample_process as usize, Some(&[0usize]));
+    start_user_thread("notebook");
 
     unsafe {
         PROCESSOR.unsafe_get().run();
     }
 }
 
-/// 创建一个内核进程
-pub fn create_kernel_thread(
-    process: Arc<RwLock<Process>>,
-    entry_point: usize,
-    arguments: Option<&[usize]>,
-) -> Arc<Thread> {
-    // 创建线程
+fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
+    let process = Process::new_kernel().unwrap();
     let thread = Thread::new(process, entry_point, arguments).unwrap();
     // 设置线程的返回地址为 kernel_thread_exit
     thread
@@ -108,14 +111,28 @@ pub fn create_kernel_thread(
         .as_mut()
         .unwrap()
         .set_ra(kernel_thread_exit as usize);
+    PROCESSOR.get().add_thread(thread);
+}
 
-    thread
+fn start_user_thread(name: &str) {
+    // 从文件系统中找到程序
+    let app = fs::ROOT_INODE.find(name).unwrap();
+    // 读取数据
+    let data = app.readall().unwrap();
+    // 解析 ELF 文件
+    let elf = ElfFile::new(data.as_slice()).unwrap();
+    // 利用 ELF 文件创建线程，映射空间并加载数据
+    let process = Process::from_elf(&elf, true).unwrap();
+    // 再从 ELF 中读出程序入口地址
+    let thread = Thread::new(process, elf.header.pt2.entry_point() as usize, None).unwrap();
+    // 添加线程
+    PROCESSOR.get().add_thread(thread);
 }
 
 fn sample_process(message: usize) {
     for i in 0..1000000 {
         if i % 200000 == 0 {
-            println!("thread {}", message);
+            println!("kernel thread {}", message);
         }
     }
 }
