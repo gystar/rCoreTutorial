@@ -1,5 +1,7 @@
 use super::context::Context;
 use super::timer;
+use crate::fs::STDIN;
+use crate::kernel::syscall_handler;
 use crate::memory::*;
 use crate::process::PROCESSOR;
 use crate::sbi::console_getchar;
@@ -57,7 +59,7 @@ pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) -> 
         // 断点中断（ebreak）
         Trap::Exception(Exception::Breakpoint) => breakpoint(context),
         // 系统调用
-        //Trap::Exception(Exception::UserEnvCall) => syscall_handler(context),
+        Trap::Exception(Exception::UserEnvCall) => syscall_handler(context),
         // 时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => supervisor_timer(context),
         // 外部中断（键盘输入）
@@ -85,7 +87,6 @@ fn supervisor_timer(context: &mut Context) -> *mut Context {
 
 /// 处理外部中断，只实现了键盘输入
 fn supervisor_external(context: &mut Context) -> *mut Context {
-    /*
     let mut c = console_getchar();
     if c <= 255 {
         if c == '\r' as usize {
@@ -93,7 +94,6 @@ fn supervisor_external(context: &mut Context) -> *mut Context {
         }
         STDIN.push(c as u8);
     }
-    */
     context
 }
 
