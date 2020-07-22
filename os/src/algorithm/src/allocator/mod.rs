@@ -28,6 +28,7 @@ pub trait VectorAllocator {
 }
 
 pub use bitmap_vector_allocator::BitmapVectorAllocator;
+pub use buddy_vector_allocator::BuddyAllocator;
 pub use segment_tree_allocator::SegTreeAllocator;
 pub use stacked_allocator::StackedAllocator;
 

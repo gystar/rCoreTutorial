@@ -48,10 +48,6 @@ impl VectorAllocator for BuddyAllocator {
 
     fn alloc(&mut self, size: usize, align: usize) -> Option<usize> {
         let (k, block_size) = uper_bound_power(size);
-        assert_eq!(
-            block_size, size,
-            "Try to alloc a block which is not a pow of 2."
-        );
         for index in k..self.blocks.len() {
             if self.blocks[index].clone().is_empty() {
                 continue;
@@ -111,10 +107,7 @@ impl VectorAllocator for BuddyAllocator {
         //start%(size*2)==0      => start+size
         //start%(size*2)==size   => start-size
         //找到伙伴的地址，合并为一个大块，并且迭代下去，直到伙伴不在空闲链表中
-        let (k, pow) = uper_bound_power(size);
-        assert_eq!(size, pow, "Try to dealloc a block which is not a pow of 2.");
-
-        let mut block_size = size;
+        let (k, mut block_size) = uper_bound_power(size);
         let mut m = k;
         let mut addr_new = start;
         while m < self.blocks.len() {

@@ -70,6 +70,11 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 - 完成实验指导4，一步步的进行的线程、进程的封装，最后完成多线程运行和正常退出。
 - 使用的是lock版本的线程
 
-7.21
+## 7.21
 
 - 完成了实验指导5，加载设备树和文件系统
+- 初步完成了伙伴分配算法。
+
+## 7.22
+
+- 完成实验指导6，加载用户程序并运行notebook程序
