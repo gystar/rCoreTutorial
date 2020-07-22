@@ -2,13 +2,13 @@
 
 mod bitmap_vector_allocator;
 mod buddy_vector_allocator;
-mod segment_tree_allocator;
 mod stacked_allocator;
 
 ///每次只分配一个单位，回收一个单位
+//注意实现的时候，不能使用动态内存分配，需要使用固定数组，数组的长度为MAX_PAGES，即最大可能的页数量
 pub trait Allocator {
-    /// 给定容量，创建分配器
-    fn new(capacity: usize) -> Self;
+    /// 给定容量，初始化分配器
+    fn init(&mut self, capacity: usize);
     /// 分配一个元素，返回被分配的单元的下标，无法分配则返回 `None`
     fn alloc(&mut self) -> Option<usize>;
     /// 回收一个元素
@@ -29,7 +29,6 @@ pub trait VectorAllocator {
 
 pub use bitmap_vector_allocator::BitmapVectorAllocator;
 pub use buddy_vector_allocator::BuddyAllocator;
-pub use segment_tree_allocator::SegTreeAllocator;
 pub use stacked_allocator::StackedAllocator;
 
 /// 默认使用的分配器
