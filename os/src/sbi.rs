@@ -5,7 +5,7 @@
 ///SBI调用
 #[inline(always)]
 fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
-    let ret;
+    let mut ret;
     unsafe {
         llvm_asm!("ecall"
             : "={x10}" (ret)
@@ -35,7 +35,7 @@ pub fn console_putchar(c: usize) {
 
 /// 从控制台中读取一个字符
 ///
-/// 没有读取到字符则返回
+/// 没有读取到字符则返回 -1
 pub fn console_getchar() -> usize {
     sbi_call(SBI_CONSOLE_GETCHAR, 0, 0, 0)
 }
