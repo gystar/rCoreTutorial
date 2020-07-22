@@ -92,7 +92,7 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         processor.add_thread(create_user_process("notebook"));
     }
     */
-    //start_kernel_thread(sample_process as usize, Some(&[0usize]));
+    start_kernel_thread(sample_process as usize, Some(&[0usize]));
     start_user_thread("hello_world");
     start_user_thread("notebook");
 
@@ -103,13 +103,8 @@ fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
     let process = Process::new_kernel().unwrap();
     let thread = Thread::new(process, entry_point, arguments).unwrap();
     // 设置线程的返回地址为 kernel_thread_exit
-    thread
-        .as_ref()
-        .inner()
-        .context
-        .as_mut()
-        .unwrap()
-        .set_ra(kernel_thread_exit as usize);
+    thread.as_ref().inner().context.as_mut().unwrap();
+    //.set_ra(kernel_thread_exit as usize);
     PROCESSOR.get().add_thread(thread);
 }
 
