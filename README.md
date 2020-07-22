@@ -78,3 +78,4 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.22
 
 - 完成实验指导6，加载用户程序并运行notebook程序
+- 为每一个lab创建本地分支和远程分支
