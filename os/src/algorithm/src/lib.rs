@@ -6,5 +6,6 @@
 extern crate alloc;
 
 mod allocator;
+pub mod unity;
 
 pub use allocator::*;

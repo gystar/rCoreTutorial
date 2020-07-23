@@ -51,26 +51,22 @@ pub extern "C" fn rust_main() -> ! {
     interrupt::init();
     memory::init();
 
-    //test memory allocal
-    use alloc::{boxed::Box, vec::Vec};
-    let v1 = Box::new(2);
-    assert_eq!(*v1, 2);
-    core::mem::drop(v1);
+    // 动态内存分配测试
+    use alloc::boxed::Box;
+    use alloc::vec::Vec;
+    let v = Box::new(5);
+    assert_eq!(*v, 5);
+    core::mem::drop(v);
 
     let mut vec = Vec::new();
-    for i in 0..3 {
+    for i in 0..10000 {
         vec.push(i);
     }
-    assert_eq!(vec.len(), 3);
-
-    for (i, v) in vec.into_iter().enumerate() {
-        assert_eq!(i, v);
+    assert_eq!(vec.len(), 10000);
+    for (i, value) in vec.into_iter().enumerate() {
+        assert_eq!(value, i);
     }
-
-    println!(
-        "kernel end address:0x{:x}",
-        memory::config::KERNEL_END_ADDRESS.0
-    );
+    println!("heap test passed");
 
     // 物理页分配
     for _ in 0..2 {

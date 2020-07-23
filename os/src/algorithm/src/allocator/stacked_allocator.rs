@@ -7,8 +7,6 @@ use alloc::{vec, vec::Vec};
 ///
 /// 在 `Vec` 末尾进行加入 / 删除。
 /// 每个元素 tuple `(start, end)` 表示 [start, end) 区间为可用。
-///每次只分配一个单位，回收一个单位
-///栈中可能有多个这样的数对，表示可用空间
 pub struct StackedAllocator {
     list: Vec<(usize, usize)>,
 }
@@ -16,7 +14,6 @@ pub struct StackedAllocator {
 impl Allocator for StackedAllocator {
     fn new(capacity: usize) -> Self {
         Self {
-            //初始可分配空间大小为[0, capacity)
             list: vec![(0, capacity)],
         }
     }
