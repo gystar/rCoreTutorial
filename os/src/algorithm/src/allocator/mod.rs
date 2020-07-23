@@ -2,6 +2,7 @@
 
 mod bitmap_vector_allocator;
 mod buddy_vector_allocator;
+mod segment_tree_allocator;
 mod stacked_allocator;
 
 /// 分配器：固定容量，每次分配 / 回收一个元素
@@ -28,6 +29,7 @@ pub trait VectorAllocator {
 
 pub use bitmap_vector_allocator::BitmapVectorAllocator;
 pub use buddy_vector_allocator::BuddyAllocator;
+pub use segment_tree_allocator::SegTreeAllocator;
 pub use stacked_allocator::StackedAllocator;
 
 /// 默认使用的分配器
