@@ -9,6 +9,7 @@ extern crate alloc;
 
 mod allocator;
 mod scheduler;
+pub mod unity;
 mod unsafe_wrapper;
 
 pub use allocator::*;
