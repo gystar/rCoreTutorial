@@ -6,6 +6,8 @@ mod stacked_allocator;
 
 ///每次只分配一个单位，回收一个单位
 //注意实现的时候，不能使用动态内存分配，需要使用固定数组，数组的长度为MAX_PAGES，即最大可能的页数量
+///栈中可能有多个这样的数对，表示可用空间
+pub const MAX_PAGES: usize = 0x8000;
 pub trait Allocator {
     /// 给定容量，初始化分配器
     fn init(&mut self, capacity: usize);
