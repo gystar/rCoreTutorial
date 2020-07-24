@@ -66,38 +66,19 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         dtb_pa
     );
 
-    /*
-    let remap = memory::mapping::memory_set::MemorySet::new_kernel().unwrap();
-    println!("try to activate remap...");
-    remap.activate();
-    println!("remap is activated.");
-    */
-
-    {
-        let kernel_process = Process::new_kernel().unwrap();
-        let mut processor = PROCESSOR.get();
-        for message in 0..8 {
-            processor.add_thread(create_kernel_thread(
-                kernel_process.clone(),
-                sample_process as usize,
-                Some(&[message]),
-            ));
-        }
+    for message in 0..7 {
+        start_kernel_thread(loop_thread as usize, Some(&[message]));
     }
 
-    unsafe {
-        PROCESSOR.unsafe_get().run();
-    }
+    PROCESSOR.get().run();
 }
 
 /// 创建一个内核进程
-pub fn create_kernel_thread(
-    process: Arc<RwLock<Process>>,
-    entry_point: usize,
-    arguments: Option<&[usize]>,
-) -> Arc<Thread> {
+pub fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
+    let kernel_process = Process::new_kernel().unwrap();
+    let mut processor = PROCESSOR.get();
     // 创建线程
-    let thread = Thread::new(process, entry_point, arguments).unwrap();
+    let thread = Thread::new(kernel_process, entry_point, arguments).unwrap();
     // 设置线程的返回地址为 kernel_thread_exit
     thread
         .as_ref()
@@ -107,14 +88,24 @@ pub fn create_kernel_thread(
         .unwrap()
         .set_ra(kernel_thread_exit as usize);
 
-    thread
+    processor.add_thread(thread);
 }
 
-fn sample_process(message: usize) {
+fn sample_thread(message: usize) {
     for i in 0..1000000 {
         if i % 200000 == 0 {
-            println!("thread {}", message);
+            println!("sample_thread {} .", message);
         }
+    }
+}
+
+fn loop_thread(message: usize) {
+    let mut i: u128 = 0;
+    loop {
+        if i % 20000000 == 0 {
+            println!("loop_thread {}", message);
+        }
+        i += 1;
     }
 }
 
@@ -122,7 +113,13 @@ fn sample_process(message: usize) {
 fn kernel_thread_exit() {
     use process::*;
     // 当前线程标记为结束
-    PROCESSOR.get().current_thread().as_ref().inner().dead = true;
+    PROCESSOR
+        .get()
+        .current_thread()
+        .unwrap()
+        .as_ref()
+        .inner()
+        .dead = true;
     // 制造一个中断来交给操作系统处理
     unsafe { llvm_asm!("ebreak" :::: "volatile") };
 }

@@ -7,7 +7,7 @@ use lazy_static::*;
 
 lazy_static! {
     /// 全局的 [`Processor`]
-    pub static ref PROCESSOR: Lock<Processor> = Lock::new(Processor::default());
+    pub static ref PROCESSOR: UnsafeWrapper<Processor> = Default::default();
 }
 
 /// 线程调度和管理
@@ -59,8 +59,15 @@ pub struct Processor {
 #[allow(unused)]
 impl Processor {
     /// 获取一个当前线程的 `Arc` 引用
-    pub fn current_thread(&self) -> Arc<Thread> {
-        self.current_thread.as_ref().unwrap().clone()
+    pub fn current_thread(&self) -> Option<Arc<Thread>> {
+        if self.current_thread.is_none() {
+            None
+        } else {
+            Some(self.current_thread.as_ref().unwrap().clone())
+        }
+    }
+    pub fn has_any(&self) -> bool {
+        !self.current_thread.is_none()
     }
 
     /// 第一次开始运行
@@ -78,7 +85,7 @@ impl Processor {
         if self.current_thread.is_none() {
             panic!("no thread to run, shutting down");
         }
-        let context = self.current_thread().prepare();
+        let context = self.current_thread().unwrap().prepare();
         // 从此将没有回头
         unsafe {
             __restore(context as usize);
@@ -125,13 +132,13 @@ impl Processor {
 
     /// 保存当前线程的 `Context`
     pub fn park_current_thread(&mut self, context: &Context) {
-        self.current_thread().park(*context);
+        self.current_thread().unwrap().park(*context);
     }
 
     /// 令当前线程进入休眠
     pub fn sleep_current_thread(&mut self) {
         // 从 current_thread 中取出
-        let current_thread = self.current_thread();
+        let current_thread = self.current_thread().unwrap();
         // 记为 sleeping
         current_thread.inner().sleeping = true;
         // 从 scheduler 移出到 sleeping_threads 中

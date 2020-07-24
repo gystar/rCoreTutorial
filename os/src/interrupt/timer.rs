@@ -24,7 +24,7 @@ pub fn tick() {
     unsafe {
         TICKS += 1;
         if TICKS % 5000 == 0 {
-            println!("{} tick", TICKS);
+            //println!("{} tick", TICKS);
         }
     }
 }
