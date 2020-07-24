@@ -88,3 +88,6 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 ## 7.23
 - 完成实验4（上）
 - 基本完成实验4（下）中的stride算法，还未解决溢出问题
+
+## 7.24
+- 解决了stride算法的溢出问题，并应用到分支lab4
