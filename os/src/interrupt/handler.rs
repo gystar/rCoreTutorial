@@ -90,26 +90,30 @@ fn supervisor_timer(context: &mut Context) -> *mut Context {
 /// 处理外部中断，只实现了键盘输入
 fn supervisor_external(context: &mut Context) -> *mut Context {
     let mut c = console_getchar();
-    if c == 3 && PROCESSOR.get().has_any() {
-        //ctrl+c
-        println!(
-            "kill a thread: {:#x?}",
-            PROCESSOR.get().current_thread().unwrap()
-        );
-        PROCESSOR
-            .get()
-            .current_thread()
-            .unwrap()
-            .as_ref()
-            .inner()
-            .dead = true;
-    }
-    if c <= 255 {
-        if c == '\r' as usize {
-            c = '\n' as usize;
+    println!("get a char:{}", c);
+    match c {
+        3 => {
+            ////ctrl+c
+            if PROCESSOR.get().has_any() {
+                println!(
+                    "kill a thread: {:#x?}",
+                    PROCESSOR.get().current_thread().unwrap()
+                );
+                PROCESSOR
+                    .get()
+                    .current_thread()
+                    .unwrap()
+                    .as_ref()
+                    .inner()
+                    .dead = true;
+            }
         }
+        99 => {
+            //c
+            PROCESSOR.get().clone_and_run(&context);
+        }
+        _ => {}
     }
-
     context
 }
 

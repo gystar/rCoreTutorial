@@ -34,6 +34,9 @@ impl<ThreadType: Clone + Eq> Default for HrrnScheduler<ThreadType> {
 impl<ThreadType: Clone + Eq> Scheduler<ThreadType> for HrrnScheduler<ThreadType> {
     type Priority = ();
 
+    fn get_count(&self) -> usize {
+        self.pool.len()
+    }
     fn add_thread(&mut self, thread: ThreadType) {
         self.pool.push_back(HrrnThread {
             birth_time: self.current_time,

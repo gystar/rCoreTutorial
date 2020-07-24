@@ -66,7 +66,7 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         dtb_pa
     );
 
-    for message in 0..7 {
+    for message in 0..4 {
         start_kernel_thread(loop_thread as usize, Some(&[message]));
     }
 
@@ -102,8 +102,12 @@ fn sample_thread(message: usize) {
 fn loop_thread(message: usize) {
     let mut i: u128 = 0;
     loop {
-        if i % 20000000 == 0 {
-            println!("loop_thread {}", message);
+        if i % 5000000 == 0 {
+            println!(
+                "[thread {}] message: {}",
+                PROCESSOR.get().current_thread().unwrap().clone().id,
+                message
+            );
         }
         i += 1;
     }

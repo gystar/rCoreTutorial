@@ -101,6 +101,7 @@ impl Processor {
                 // 准备下一个线程
                 let context = next_thread.prepare();
                 self.current_thread = Some(next_thread);
+
                 return context;
             } else {
                 // 没有活跃线程
@@ -112,6 +113,21 @@ impl Processor {
                     crate::interrupt::wait_for_interrupt();
                 }
             }
+        }
+    }
+
+    //复制当前线程，并运行
+    pub fn clone_and_run(&mut self, context: &Context) {
+        if let Some(cur_thread) = self.current_thread.clone() {
+            println!("the current thread is : {:#x?}", cur_thread);
+            let kernel_process = Process::new_kernel().unwrap();
+            // 复制当前线程
+            let thread = cur_thread.clone_self().unwrap();
+            thread.inner().context.replace(*context);
+            println!("the cloned thread : {:#x?}", thread);
+            self.add_thread(thread);
+        } else {
+            println!("There is no thread to clone.");
         }
     }
 
@@ -152,4 +168,18 @@ impl Processor {
         let thread = self.current_thread.take().unwrap();
         self.scheduler.remove_thread(&thread);
     }
+}
+
+/// 内核线程需要调用这个函数来退出
+fn kernel_thread_exit() {
+    // 当前线程标记为结束
+    PROCESSOR
+        .get()
+        .current_thread()
+        .unwrap()
+        .as_ref()
+        .inner()
+        .dead = true;
+    // 制造一个中断来交给操作系统处理
+    unsafe { llvm_asm!("ebreak" :::: "volatile") };
 }

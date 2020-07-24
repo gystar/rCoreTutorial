@@ -23,6 +23,10 @@ pub trait Scheduler<ThreadType: Clone + Eq>: Default {
     fn remove_thread(&mut self, thread: &ThreadType);
     /// 设置线程的优先级
     fn set_priority(&mut self, thread: ThreadType, priority: Self::Priority);
+
+    fn get_count(&self) -> usize {
+        0
+    }
 }
 
 pub use fifo_scheduler::FifoScheduler;
