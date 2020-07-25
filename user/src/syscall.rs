@@ -1,11 +1,12 @@
 //! 系统调用
-
+use alloc::string::String;
 pub const STDIN: usize = 0;
 pub const STDOUT: usize = 1;
 
 const SYSCALL_READ: usize = 63;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_EXIT: usize = 93;
+pub const SYSCAL_GETTID: usize = 66;
 
 /// 将参数放在对应寄存器中，并执行 `ecall`
 fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> isize {
@@ -44,6 +45,19 @@ pub fn sys_write(fd: usize, buffer: &[u8]) -> isize {
         buffer as *const [u8] as *const u8 as usize,
         buffer.len(),
     )
+}
+
+/// 获取线程ID
+pub fn sys_get_tid() -> isize {
+    let mut buffer = [0u8; 8];
+    let size = syscall(
+        SYSCAL_GETTID,
+        0,
+        &buffer as *const [u8] as *const u8 as usize,
+        buffer.len(),
+    );
+
+    isize::from_be_bytes(buffer)
 }
 
 /// 退出并返回数值

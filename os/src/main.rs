@@ -92,7 +92,7 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         processor.add_thread(create_user_process("notebook"));
     }
     */
-    start_kernel_thread(sample_process as usize, Some(&[0usize]));
+    //start_kernel_thread(sample_process as usize, Some(&[0usize]));
     start_user_thread("hello_world");
     start_user_thread("notebook");
 

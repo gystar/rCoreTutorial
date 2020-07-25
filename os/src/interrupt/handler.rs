@@ -46,7 +46,7 @@ pub fn init() {
 #[no_mangle]
 pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) -> *mut Context {
     // 首先检查线程是否已经结束（内核线程会自己设置标记来结束自己）
-    /*{
+    {
         let mut processor = PROCESSOR.get();
         let current_thread = processor.current_thread();
         if current_thread.as_ref().inner().dead {
@@ -54,7 +54,7 @@ pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) -> 
             processor.kill_current_thread();
             return processor.prepare_next_thread();
         }
-    }*/
+    }
     // 根据中断类型来处理，返回的 Context 必须位于放在内核栈顶
     match scause.cause() {
         // 断点中断（ebreak）
