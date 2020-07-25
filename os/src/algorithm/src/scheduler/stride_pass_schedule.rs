@@ -4,7 +4,7 @@ use core::cmp::Ordering;
 
 type UNSIGNED = u64;
 type SIGNED = i64;
-const MAX_STRIDE: UNSIGNED = UNSIGNED::MAX;
+const MAX_STRIDE: UNSIGNED = UNSIGNED::MAX >> 1;
 const DEFAULT_STRIDE: UNSIGNED = 0;
 const PRORITY_ODD: UNSIGNED = 1;
 
