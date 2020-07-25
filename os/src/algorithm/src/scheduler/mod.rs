@@ -2,6 +2,7 @@
 
 mod fifo_scheduler;
 mod hrrn_scheduler;
+mod stride_pass_schedule;
 
 /// 线程调度器
 ///
@@ -13,17 +14,19 @@ mod hrrn_scheduler;
 /// - 当一个线程结束时，需要调用 [`Scheduler::remove_thread()`] 来将其移除。这个方法必须在
 ///   [`Scheduler::get_next()`] 之前调用。
 pub trait Scheduler<ThreadType: Clone + Eq>: Default {
+    type Priority;
     /// 向线程池中添加一个线程
-    fn add_thread<T>(&mut self, thread: ThreadType, priority: T);
+    fn add_thread(&mut self, thread: ThreadType, priority: Self::Priority);
     /// 获取下一个时间段应当执行的线程
     fn get_next(&mut self) -> Option<ThreadType>;
     /// 移除一个线程
     fn remove_thread(&mut self, thread: &ThreadType);
     /// 设置线程的优先级
-    fn set_priority<T>(&mut self, thread: ThreadType, priority: T);
+    fn set_priority(&mut self, thread: ThreadType, priority: Self::Priority);
 }
 
 pub use fifo_scheduler::FifoScheduler;
 pub use hrrn_scheduler::HrrnScheduler;
+pub use stride_pass_schedule::StridePassScheduler;
 
-pub type SchedulerImpl<T> = HrrnScheduler<T>;
+pub type SchedulerImpl<T> = StridePassScheduler<T>;
