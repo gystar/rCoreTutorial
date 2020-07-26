@@ -48,16 +48,23 @@ pub fn sys_write(fd: usize, buffer: &[u8]) -> isize {
 }
 
 /// 获取线程ID
-pub fn sys_get_tid() -> isize {
-    let mut buffer = [0u8; 8];
+pub fn sys_get_tid() -> (isize, /*tid*/ isize /*pid*/) {
+    let mut buffer = [0u8; 16];
     let size = syscall(
         SYSCAL_GETTID,
         0,
         &buffer as *const [u8] as *const u8 as usize,
         buffer.len(),
     );
-
-    isize::from_be_bytes(buffer)
+    let mut buff1 = [0u8; 8];
+    let mut buff2 = [0u8; 8];
+    for i in 0..8 {
+        buff1[i] = buffer[i];
+    }
+    for i in 0..8 {
+        buff2[i] = buffer[i + 8];
+    }
+    (isize::from_be_bytes(buff1), isize::from_be_bytes(buff2))
 }
 
 /// 退出并返回数值

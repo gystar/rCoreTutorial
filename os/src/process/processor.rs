@@ -99,12 +99,10 @@ impl Processor {
     }
 
     //复制当前线程，并运行
-    pub fn clone_and_run(&mut self, context: &Context) {
+    pub fn clone_fork(&mut self, context: &Context) {
         if let Some(cur_thread) = self.current_thread.clone() {
             println!("the current thread is : {:#x?}", cur_thread);
-            // 复制当前线程
-            let thread = cur_thread.clone_self().unwrap();
-            thread.inner().context.replace(context.clone());
+            let thread = cur_thread.clone_process().unwrap();
             println!("the cloned thread : {:#x?}", thread);
             self.add_thread(thread);
         } else {

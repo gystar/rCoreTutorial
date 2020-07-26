@@ -4,12 +4,15 @@ use super::*;
 use crate::fs::*;
 use xmas_elf::ElfFile;
 
+/// 进程计数，用于设置线程 ID
+static mut PROCESS_COUNTER: isize = 0;
 /// 进程的信息
 pub struct Process {
     /// 是否属于用户态
     pub is_user: bool,
     /// 用 `Mutex` 包装一些可变的变量
     pub inner: Mutex<ProcessInner>,
+    id: isize,
 }
 
 pub struct ProcessInner {
@@ -29,6 +32,10 @@ impl Process {
                 memory_set: MemorySet::new_kernel()?,
                 descriptors: vec![STDIN.clone(), STDOUT.clone()],
             }),
+            id: unsafe {
+                PROCESS_COUNTER += 1;
+                PROCESS_COUNTER
+            },
         }))
     }
 
@@ -40,12 +47,39 @@ impl Process {
                 memory_set: MemorySet::from_elf(file, is_user)?,
                 descriptors: vec![STDIN.clone(), STDOUT.clone()],
             }),
+            id: unsafe {
+                PROCESS_COUNTER += 1;
+                PROCESS_COUNTER
+            },
         }))
+    }
+
+    //克隆当前的进程
+    pub fn clone_self(&self) -> Arc<Self> {
+        if self.is_user {
+            Arc::new(Self {
+                is_user: true,
+                inner: Mutex::new(ProcessInner {
+                    memory_set: self.inner().memory_set.clone_self(),
+                    descriptors: vec![STDIN.clone(), STDOUT.clone()],
+                }),
+                id: unsafe {
+                    PROCESS_COUNTER += 1;
+                    PROCESS_COUNTER
+                },
+            })
+        } else {
+            Process::new_kernel().unwrap()
+        }
     }
 
     /// 上锁并获得可变部分的引用
     pub fn inner(&self) -> spin::MutexGuard<ProcessInner> {
         self.inner.lock()
+    }
+
+    pub fn GetId(&self) -> isize {
+        self.id
     }
 
     /// 分配一定数量的连续虚拟空间

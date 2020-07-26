@@ -23,6 +23,8 @@ pub struct MemorySet {
     pub segments: Vec<Segment>,
     /// 所有分配的物理页面映射信息
     pub allocated_pairs: Vec<(VirtualPageNumber, FrameTracker)>,
+    elf_start: usize, //segments中，elf文件相关段的起始位置
+    init_data: Vec<Option<Vec<u8>>>,
 }
 
 impl MemorySet {
@@ -84,10 +86,13 @@ impl MemorySet {
             // 同时将新分配的映射关系保存到 allocated_pairs 中
             allocated_pairs.extend(mapping.map(segment, None)?);
         }
+        let elf_start = segments.len();
         Ok(MemorySet {
             mapping,
             segments,
             allocated_pairs,
+            elf_start,
+            init_data: Vec::new(),
         })
     }
 
@@ -107,6 +112,11 @@ impl MemorySet {
             let size = program_header.mem_size() as usize;
             let data: &[u8] =
                 if let SegmentData::Undefined(data) = program_header.get_data(file).unwrap() {
+                    let mut vec = Vec::new();
+                    for i in data {
+                        vec.push(*i);
+                    }
+                    memory_set.init_data.push(Some(vec));
                     data
                 } else {
                     return Err("unsupported elf format");
@@ -127,6 +137,26 @@ impl MemorySet {
         }
 
         Ok(memory_set)
+    }
+
+    pub fn clone_self(&self) -> MemorySet {
+        // 建立带有内核映射的 MemorySet
+        let mut memory_set = MemorySet::new_kernel().unwrap();
+        //复制elf文件中的各个字段并且mapping
+        //复制每个段
+        println!("clone segment:");
+        println!(
+            "{} {} {}",
+            self.elf_start,
+            self.segments.len(),
+            self.init_data.len()
+        );
+        for i in self.elf_start..self.segments.len() - 1 {
+            //还有一个是栈的空间
+            let data = self.init_data[i - self.elf_start].clone();
+            memory_set.add_segment(self.segments[i].clone(), Some(data.unwrap().as_slice()));
+        }
+        memory_set
     }
 
     /// 替换 `satp` 以激活页表

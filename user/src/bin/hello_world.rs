@@ -10,9 +10,6 @@ use user_lib::sys_get_tid;
 #[no_mangle]
 pub fn main() -> usize {
     let mut vec = vec![1, 2, 3];
-    println!(
-        "Hello world from user mode program!\nthread id: {}",
-        sys_get_tid()
-    );
+    println!("Hello world from user mode program!\n");
     0
 }

@@ -95,7 +95,7 @@ fn supervisor_external(context: &mut Context) -> Result<*mut Context, String> {
     let mut c = console_getchar();
     if c == 99 {
         //c,复制当前线程
-        PROCESSOR.lock().clone_and_run(&context);
+        PROCESSOR.lock().clone_fork(&context);
     }
     if c <= 255 {
         if c == '\r' as usize {

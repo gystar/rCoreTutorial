@@ -92,8 +92,8 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         processor.add_thread(create_user_process("notebook"));
     }
     */
-    start_kernel_thread(sample_process as usize, Some(&[0usize]));
-    //start_user_thread("user_process");
+    //start_kernel_thread(sample_process as usize, Some(&[0usize]));
+    start_user_thread("user_process");
 
     extern "C" {
         fn __restore(context: usize);
@@ -134,11 +134,9 @@ fn sample_process(message: usize) {
     loop {
         for i in 0..u128::MAX {
             if i % 1000000 == 0 {
-                println!(
-                    "[thread {}] ticks {}",
-                    PROCESSOR.lock().current_thread().id,
-                    i
-                );
+                let pid = PROCESSOR.lock().current_thread().process.clone().GetId();
+                let tid = PROCESSOR.lock().current_thread().id;
+                println!("[process {}, thread {}] ticks {}", pid, tid, i);
             }
         }
     }

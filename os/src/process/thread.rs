@@ -31,6 +31,8 @@ pub struct ThreadInner {
     pub sleeping: bool,
     /// 是否已经结束
     pub dead: bool,
+    ///入口地址
+    entry_point: usize,
 }
 
 impl Thread {
@@ -78,32 +80,36 @@ impl Thread {
                 context: Some(context),
                 sleeping: false,
                 dead: false,
+                entry_point,
             }),
         });
 
         Ok(thread)
     }
 
-    pub fn clone_self(&self) -> MemoryResult<Arc<Thread>> {
+    //复制当前进程，并创建线程
+    pub fn clone_process(&self) -> MemoryResult<Arc<Thread>> {
+        let mut process = self.process.clone_self();
         // 让所属进程分配并映射一段空间，作为线程的栈
-        let mut stack = self
-            .process
-            .alloc_page_range(STACK_SIZE, Flags::READABLE | Flags::WRITABLE)?;
+        let mut stack = process.alloc_page_range(STACK_SIZE, Flags::READABLE | Flags::WRITABLE)?;
 
+        /*
         let src = self.stack.start;
         let dest = self.stack.end;
         //将栈的数据拷贝过来
         for i in 0..stack.len() {
             *dest.deref::<usize>() = *src.deref();
         }
+        */
 
         // 复制 Context
         //注意，若是当前正在执行，则context为空
-        let mut context = None;
-        if let Some(_) = self.inner().context.clone() {
-            context.replace(self.inner().context.unwrap().clone());
-            context.as_mut().unwrap().set_arguments(&[777]);
-        }
+        let context = Some(Context::new(
+            stack.end.into(),
+            self.inner().entry_point,
+            Some(&[0usize]),
+            process.is_user,
+        ));
         // 打包成线程
         let thread = Arc::new(Thread {
             id: unsafe {
@@ -111,11 +117,12 @@ impl Thread {
                 THREAD_COUNTER
             },
             stack,
-            process: self.process.clone(),
+            process,
             inner: Mutex::new(ThreadInner {
                 context,
                 sleeping: false,
                 dead: false,
+                entry_point: self.inner().entry_point,
             }),
         });
 

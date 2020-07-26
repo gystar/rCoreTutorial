@@ -12,7 +12,8 @@ pub fn main() -> ! {
     loop {
         for i in 0..u128::MAX {
             if i % 1000000 == 0 {
-                println!("[thread {}]user_process ticks {}.", sys_get_tid(), i);
+                let (tid, pid) = sys_get_tid();
+                println!("[process {},thread {}]user_process ticks {}.", pid, tid, i);
             }
         }
     }
