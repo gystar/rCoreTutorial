@@ -47,7 +47,7 @@ pub fn init() {
 pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) -> *mut Context {
     // 首先检查线程是否已经结束（内核线程会自己设置标记来结束自己）
     {
-        let mut processor = PROCESSOR.get();
+        let mut processor = PROCESSOR.lock();
         let current_thread = processor.current_thread();
         if current_thread.as_ref().inner().dead {
             println!("thread {} exit", current_thread.id);
@@ -86,8 +86,8 @@ fn breakpoint(context: &mut Context) -> Result<*mut Context, String> {
 /// 处理时钟中断
 fn supervisor_timer(context: &mut Context) -> Result<*mut Context, String> {
     timer::tick();
-    PROCESSOR.get().park_current_thread(context);
-    Ok(PROCESSOR.get().prepare_next_thread())
+    PROCESSOR.lock().park_current_thread(context);
+    Ok(PROCESSOR.lock().prepare_next_thread())
 }
 
 /// 处理外部中断，只实现了键盘输入
@@ -95,7 +95,7 @@ fn supervisor_external(context: &mut Context) -> Result<*mut Context, String> {
     let mut c = console_getchar();
     if c == 99 {
         //c,复制当前线程
-        PROCESSOR.get().clone_and_run(&context);
+        PROCESSOR.lock().clone_and_run(&context);
     }
     if c <= 255 {
         if c == '\r' as usize {
@@ -110,12 +110,12 @@ fn supervisor_external(context: &mut Context) -> Result<*mut Context, String> {
 fn fault(msg: String, scause: Scause, stval: usize) -> *mut Context {
     println!(
         "{:#x?} terminated: {}",
-        PROCESSOR.get().current_thread(),
+        PROCESSOR.lock().current_thread(),
         msg
     );
     println!("cause: {:?}, stval: {:x}", scause.cause(), stval);
 
-    PROCESSOR.get().kill_current_thread();
+    PROCESSOR.lock().kill_current_thread();
     // 跳转到 PROCESSOR 调度的下一个线程
-    PROCESSOR.get().prepare_next_thread()
+    PROCESSOR.lock().prepare_next_thread()
 }

@@ -80,7 +80,7 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
     /*
     {
         let kernel_process = Process::new_kernel().unwrap();
-        let mut processor = PROCESSOR.get();
+        let mut processor = PROCESSOR.lock();
 
         processor.add_thread(create_kernel_thread(
             kernel_process.clone(),
@@ -95,7 +95,14 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
     start_kernel_thread(sample_process as usize, Some(&[0usize]));
     //start_user_thread("user_process");
 
-    PROCESSOR.get().run();
+    extern "C" {
+        fn __restore(context: usize);
+    }
+    // 获取第一个线程的 Context
+    let context = PROCESSOR.lock().prepare_next_thread();
+    // 启动第一个线程
+    unsafe { __restore(context as usize) };
+    unreachable!()
 }
 
 fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
@@ -104,7 +111,7 @@ fn start_kernel_thread(entry_point: usize, arguments: Option<&[usize]>) {
     // 设置线程的返回地址为 kernel_thread_exit
     thread.as_ref().inner().context.as_mut().unwrap();
     //.set_ra(kernel_thread_exit as usize);
-    PROCESSOR.get().add_thread(thread);
+    PROCESSOR.lock().add_thread(thread);
 }
 
 fn start_user_thread(name: &str) {
@@ -119,7 +126,7 @@ fn start_user_thread(name: &str) {
     // 再从 ELF 中读出程序入口地址
     let thread = Thread::new(process, elf.header.pt2.entry_point() as usize, None).unwrap();
     // 添加线程
-    PROCESSOR.get().add_thread(thread);
+    PROCESSOR.lock().add_thread(thread);
 }
 
 fn sample_process(message: usize) {
@@ -129,7 +136,7 @@ fn sample_process(message: usize) {
             if i % 1000000 == 0 {
                 println!(
                     "[thread {}] ticks {}",
-                    PROCESSOR.get().current_thread().id,
+                    PROCESSOR.lock().current_thread().id,
                     i
                 );
             }
@@ -141,7 +148,7 @@ fn sample_process(message: usize) {
 fn kernel_thread_exit() {
     use process::*;
     // 当前线程标记为结束
-    PROCESSOR.get().current_thread().as_ref().inner().dead = true;
+    PROCESSOR.lock().current_thread().as_ref().inner().dead = true;
     // 制造一个中断来交给操作系统处理
     unsafe { llvm_asm!("ebreak" :::: "volatile") };
 }
