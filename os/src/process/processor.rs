@@ -116,6 +116,20 @@ impl Processor {
         self.scheduler.add_thread(thread, 0);
     }
 
+    //复制当前线程，并运行
+    pub fn clone_and_run(&mut self, context: &Context) {
+        if let Some(cur_thread) = self.current_thread.clone() {
+            println!("the current thread is : {:#x?}", cur_thread);
+            // 复制当前线程
+            let thread = cur_thread.clone_self().unwrap();
+            thread.inner().context.replace(context.clone());
+            println!("the cloned thread : {:#x?}", thread);
+            self.add_thread(thread);
+        } else {
+            println!("There is no thread to clone.");
+        }
+    }
+
     /// 唤醒一个休眠线程
     pub fn wake_thread(&mut self, thread: Arc<Thread>) {
         thread.inner().sleeping = false;

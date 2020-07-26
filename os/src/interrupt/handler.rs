@@ -93,6 +93,10 @@ fn supervisor_timer(context: &mut Context) -> Result<*mut Context, String> {
 /// 处理外部中断，只实现了键盘输入
 fn supervisor_external(context: &mut Context) -> Result<*mut Context, String> {
     let mut c = console_getchar();
+    if c == 99 {
+        //c,复制当前线程
+        PROCESSOR.get().clone_and_run(&context);
+    }
     if c <= 255 {
         if c == '\r' as usize {
             c = '\n' as usize;

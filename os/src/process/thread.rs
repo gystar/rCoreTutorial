@@ -94,6 +94,46 @@ impl Thread {
         Ok(thread)
     }
 
+    pub fn clone_self(&self) -> MemoryResult<Arc<Thread>> {
+        // 让所属进程分配并映射一段空间，作为线程的栈
+        let mut stack = self
+            .process
+            .write()
+            .alloc_page_range(STACK_SIZE, Flags::READABLE | Flags::WRITABLE)?;
+
+        let src = self.stack.start;
+        let dest = self.stack.end;
+        //将栈的数据拷贝过来
+        for i in 0..stack.len() {
+            *dest.deref::<usize>() = *src.deref();
+        }
+
+        // 复制 Context
+        //注意，若是当前正在执行，则context为空
+        let mut context = None;
+        if let Some(_) = self.inner().context.clone() {
+            context.replace(self.inner().context.unwrap().clone());
+            context.as_mut().unwrap().set_arguments(&[777]);
+        }
+        // 打包成线程
+        let thread = Arc::new(Thread {
+            id: unsafe {
+                THREAD_COUNTER += 1;
+                THREAD_COUNTER
+            },
+            stack,
+            process: self.process.clone(),
+            inner: Mutex::new(ThreadInner {
+                context,
+                sleeping: false,
+                dead: false,
+                descriptors: vec![STDIN.clone(), STDOUT.clone()],
+            }),
+        });
+
+        Ok(thread)
+    }
+
     pub fn inner(&self) -> spin::MutexGuard<ThreadInner> {
         self.inner.lock()
     }

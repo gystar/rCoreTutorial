@@ -92,9 +92,8 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         processor.add_thread(create_user_process("notebook"));
     }
     */
-    //start_kernel_thread(sample_process as usize, Some(&[0usize]));
-    start_user_thread("hello_world");
-    start_user_thread("notebook");
+    start_kernel_thread(sample_process as usize, Some(&[0usize]));
+    //start_user_thread("user_process");
 
     PROCESSOR.get().run();
 }
@@ -125,6 +124,17 @@ fn start_user_thread(name: &str) {
 
 fn sample_process(message: usize) {
     println!("hello world from kernel thread.");
+    loop {
+        for i in 0..u128::MAX {
+            if i % 1000000 == 0 {
+                println!(
+                    "[thread {}] ticks {}",
+                    PROCESSOR.get().current_thread().id,
+                    i
+                );
+            }
+        }
+    }
 }
 
 /// 内核线程需要调用这个函数来退出
