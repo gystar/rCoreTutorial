@@ -75,21 +75,30 @@ pub extern "C" fn rust_main(_hart_id: usize, dtb_pa: PhysicalAddress) -> ! {
         dtb_pa
     );
 
-    {
-        let kernel_process = Process::new_kernel().unwrap();
-        let mut processor = PROCESSOR.get();
-        for message in 0..8 {
-            processor.add_thread(create_kernel_thread(
-                kernel_process.clone(),
-                sample_process as usize,
-                Some(&[message]),
-            ));
-        }
+    extern "C" {
+        fn __restore(context: usize);
     }
+    // 获取第一个线程的 Context
+    let context = PROCESSOR.lock().prepare_next_thread();
+    // 启动第一个线程
+    unsafe { __restore(context as usize) };
+    unreachable!()
+}
 
-    unsafe {
-        PROCESSOR.unsafe_get().run();
+/// 测试缺页异常处理
+///
+/// 为了便于体现效果，只给每个线程分配了很低的可用物理页面限额，见 [`KERNEL_PROCESS_FRAME_QUOTA`]
+///
+/// [`KERNEL_PROCESS_FRAME_QUOTA`]: memory::config::KERNEL_PROCESS_FRAME_QUOTA
+fn test_page_fault() {
+    let mut array = [0usize; 32 * 1024];
+    for i in 0..array.len() {
+        array[i] = i;
     }
+    for i in 0..array.len() {
+        assert_eq!(i, array[i]);
+    }
+    println!("\x1b[32mtest passed\x1b[0m");
 }
 
 /// 创建一个内核进程
@@ -124,7 +133,7 @@ fn sample_process(message: usize) {
 fn kernel_thread_exit() {
     use process::*;
     // 当前线程标记为结束
-    PROCESSOR.get().current_thread().as_ref().inner().dead = true;
+    PROCESSOR.lock().current_thread().as_ref().inner().dead = true;
     // 制造一个中断来交给操作系统处理
     unsafe { llvm_asm!("ebreak" :::: "volatile") };
 }
