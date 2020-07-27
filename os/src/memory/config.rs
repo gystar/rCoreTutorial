@@ -16,6 +16,10 @@ pub const KERNEL_MAP_OFFSET: usize = 0xffff_ffff_0000_0000;
 pub const DEVICE_START_ADDRESS: PhysicalAddress = PhysicalAddress(0x1000_0000);
 /// MMIO 设备段内存区域结束地址
 pub const DEVICE_END_ADDRESS: PhysicalAddress = PhysicalAddress(0x1001_0000);
+/// 用户进程最多使用的物理页面数量
+pub const USER_PROCESS_FRAME_QUOTA: usize = 16;
+/// 内核进程最多使用的物理页面数量
+pub const KERNEL_PROCESS_FRAME_QUOTA: usize = 16;
 
 lazy_static! {
       /// 内核代码结束的地址，即可以用来分配的内存起始地址

@@ -70,6 +70,22 @@ impl PageTableEntry {
             || flags.contains(Flags::WRITABLE)
             || flags.contains(Flags::EXECUTABLE))
     }
+    /// 设置物理页号，同时根据 ppn 是否为 Some 来设置 Valid 位
+    pub fn update_page_number(&mut self, ppn: Option<PhysicalPageNumber>) {
+        if let Some(ppn) = ppn {
+            self.0
+                .set_bits(FLAG_RANGE, (self.flags() | Flags::VALID).bits() as usize)
+                .set_bits(PAGE_NUMBER_RANGE, ppn.into());
+        } else {
+            self.0
+                .set_bits(FLAG_RANGE, (self.flags() - Flags::VALID).bits() as usize)
+                .set_bits(PAGE_NUMBER_RANGE, 0);
+        }
+    }
+    /// 是否为 Valid
+    pub fn is_valid(&self) -> bool {
+        self.flags().contains(Flags::VALID)
+    }
 }
 
 impl core::fmt::Debug for PageTableEntry {
