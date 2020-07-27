@@ -1,10 +1,8 @@
 //! 一个线程中关于内存空间的所有信息 [`MemorySet`]
-//!
 
 use crate::memory::{
     address::*,
     config::*,
-    frame::FrameTracker,
     mapping::{Flags, MapType, Mapping, Segment},
     range::Range,
     MemoryResult,
@@ -24,7 +22,6 @@ pub struct MemorySet {
 }
 
 impl MemorySet {
-    /// 创建内核重映射
     /// 创建内核重映射
     pub fn new_kernel() -> MemoryResult<MemorySet> {
         // 在 linker.ld 里面标记的各个字段的起始点，均为 4K 对齐
@@ -85,7 +82,6 @@ impl MemorySet {
     }
 
     /// 通过 elf 文件创建内存映射（不包括栈）
-    // todo: 有可能不同的字段出现在同一页？
     pub fn from_elf(file: &ElfFile, is_user: bool) -> MemoryResult<MemorySet> {
         // 建立带有内核映射的 MemorySet
         let mut memory_set = MemorySet::new_kernel()?;
@@ -133,6 +129,8 @@ impl MemorySet {
     pub fn add_segment(&mut self, segment: Segment, init_data: Option<&[u8]>) -> MemoryResult<()> {
         // 检测 segment 没有重合
         assert!(!self.overlap_with(segment.page_range()));
+        // 映射并将新分配的页面保存下来
+        self.mapping.map(&segment, init_data)?;
         self.segments.push(segment);
         Ok(())
     }

@@ -1,5 +1,7 @@
 use super::context::Context;
 use super::timer;
+use crate::fs::STDIN;
+use crate::kernel::syscall_handler;
 use crate::memory::*;
 use crate::process::PROCESSOR;
 use crate::sbi::console_getchar;
@@ -26,13 +28,13 @@ pub fn init() {
         sie::set_sext();
 
         // 在 OpenSBI 中开启外部中断
-        // *PhysicalAddress(0x0c00_2080).deref_kernel() = 1u32 << 10;
+        *PhysicalAddress(0x0c00_2080).deref_kernel() = 1u32 << 10;
         // 在 OpenSBI 中开启串口
-        // *PhysicalAddress(0x1000_0004).deref_kernel() = 0x0bu8;
-        // *PhysicalAddress(0x1000_0001).deref_kernel() = 0x01u8;
+        *PhysicalAddress(0x1000_0004).deref_kernel() = 0x0bu8;
+        *PhysicalAddress(0x1000_0001).deref_kernel() = 0x01u8;
         // 其他一些外部中断相关魔数
-        // *PhysicalAddress(0x0C00_0028).deref_kernel() = 0x07u32;
-        // *PhysicalAddress(0x0C20_1000).deref_kernel() = 0u32;
+        *PhysicalAddress(0x0C00_0028).deref_kernel() = 0x07u32;
+        *PhysicalAddress(0x0C20_1000).deref_kernel() = 0u32;
     }
 }
 
@@ -57,13 +59,17 @@ pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) -> 
         // 断点中断（ebreak）
         Trap::Exception(Exception::Breakpoint) => breakpoint(context),
         // 系统调用
-        //Trap::Exception(Exception::UserEnvCall) => syscall_handler(context),
+        Trap::Exception(Exception::UserEnvCall) => syscall_handler(context),
+        // 缺页异常
+        Trap::Exception(Exception::LoadPageFault)
+        | Trap::Exception(Exception::StorePageFault)
+        | Trap::Exception(Exception::InstructionPageFault) => page_fault(context, scause, stval),
         // 时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => supervisor_timer(context),
         // 外部中断（键盘输入）
         Trap::Interrupt(Interrupt::SupervisorExternal) => supervisor_external(context),
         // 其他情况，无法处理
-        _ => fault("unimplemented interrupt type: {:x?}", scause, stval),
+        _ => fault("unimplemented interrupt type", scause, stval),
     }
 }
 
@@ -76,6 +82,27 @@ fn breakpoint(context: &mut Context) -> *mut Context {
     context
 }
 
+/// 处理缺页异常
+///
+/// todo: 理论上这里需要判断访问类型，并与页表中的标志位进行比对
+fn page_fault(context: &mut Context, scause: Scause, stval: usize) -> *mut Context {
+    static mut COUNT: usize = 0;
+    println!("page_fault {}", unsafe {
+        COUNT += 1;
+        COUNT
+    });
+    let current_thread = PROCESSOR.lock().current_thread();
+    let memory_set = &mut current_thread.process.inner().memory_set;
+
+    match memory_set.mapping.handle_page_fault(stval) {
+        Ok(_) => {
+            memory_set.activate();
+            context
+        }
+        Err(msg) => fault(msg, scause, stval),
+    }
+}
+
 /// 处理时钟中断
 fn supervisor_timer(context: &mut Context) -> *mut Context {
     timer::tick();
@@ -85,7 +112,6 @@ fn supervisor_timer(context: &mut Context) -> *mut Context {
 
 /// 处理外部中断，只实现了键盘输入
 fn supervisor_external(context: &mut Context) -> *mut Context {
-    /*
     let mut c = console_getchar();
     if c <= 255 {
         if c == '\r' as usize {
@@ -93,7 +119,6 @@ fn supervisor_external(context: &mut Context) -> *mut Context {
         }
         STDIN.push(c as u8);
     }
-    */
     context
 }
 

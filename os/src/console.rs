@@ -14,10 +14,13 @@
 use crate::sbi::*;
 use core::fmt::{self, Write};
 
-/// 用0大小结构体作为名字空间
+/// 一个 [Zero-Sized Type]，实现 [`core::fmt::Write`] trait 来进行格式化输出
 ///
-/// ZST[Zero-Sized Type] 只可能有一个值（即为空），因此它本身就是一个单件
+/// ZST 只可能有一个值（即为空），因此它本身就是一个单件
+///
+/// [Zero-Sized Type]: https://doc.rust-lang.org/nomicon/exotic-sizes.html#zero-sized-types-zsts
 struct Stdout;
+
 impl Write for Stdout {
     /// 打印一个字符串
     ///
@@ -47,8 +50,8 @@ pub fn print(args: fmt::Arguments) {
 ///
 /// 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
 #[macro_export]
-macro_rules! print{
-    ($fmt: literal $(, $($arg: tt)+)?) =>{
+macro_rules! print {
+    ($fmt: literal $(, $($arg: tt)+)?) => {
         $crate::console::print(format_args!($fmt $(, $($arg)+)?));
     }
 }
@@ -56,18 +59,9 @@ macro_rules! print{
 /// 实现类似于标准库中的 `println!` 宏
 ///
 /// 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
+#[macro_export]
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {
-        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
-    }
-}
-
-/// 比println会多打印一下文件名和行号
-///
-/// 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
-macro_rules! println_d {
-    ($fmt: literal $(, $($arg: tt)+)?) => {
-        print!("[{} {}]", file!(),line!());
         $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
     }
 }

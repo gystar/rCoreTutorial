@@ -6,6 +6,7 @@ use crate::drivers::{
     block::BlockDevice,
     driver::{DeviceType, DRIVERS},
 };
+use crate::kernel::Condvar;
 use alloc::{sync::Arc, vec::Vec};
 use core::any::Any;
 use lazy_static::lazy_static;
@@ -18,7 +19,6 @@ mod stdin;
 mod stdout;
 mod swap;
 
-pub use crate::kernel::Condvar;
 pub use config::*;
 pub use inode_ext::INodeExt;
 pub use rcore_fs::{dev::block_cache::BlockCache, vfs::*};

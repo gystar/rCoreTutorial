@@ -1,6 +1,7 @@
 //! 提供帧分配器 [`FRAME_ALLOCATOR`](FrameAllocator)
 //!
 //! 返回的 [`FrameTracker`] 类型代表一个帧，它在被 drop 时会自动将空间补回分配器中。
+
 use super::*;
 use crate::memory::*;
 use algorithm::*;
@@ -9,11 +10,10 @@ use spin::Mutex;
 
 lazy_static! {
     /// 帧分配器
-    pub static ref FRAME_ALLOCATOR: Mutex<FrameAllocator<AllocatorImpl>> = Mutex::new(
-        FrameAllocator::new(
-            Range::from(
-                PhysicalPageNumber::ceil(PhysicalAddress::from(*KERNEL_END_ADDRESS))..PhysicalPageNumber::floor(MEMORY_END_ADDRESS)
-        )));
+    pub static ref FRAME_ALLOCATOR: Mutex<FrameAllocator<AllocatorImpl>> = Mutex::new(FrameAllocator::new(Range::from(
+            PhysicalPageNumber::ceil(PhysicalAddress::from(*KERNEL_END_ADDRESS))..PhysicalPageNumber::floor(MEMORY_END_ADDRESS),
+        )
+    ));
 }
 
 /// 基于线段树的帧分配 / 回收

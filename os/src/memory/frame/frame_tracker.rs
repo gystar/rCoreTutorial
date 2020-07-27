@@ -1,4 +1,7 @@
-use super::{super::config::PAGE_SIZE, allocator::FRAME_ALLOCATOR};
+//! 提供物理页的「`Box`」 [`FrameTracker`]
+
+use crate::memory::{address::*, FRAME_ALLOCATOR, PAGE_SIZE};
+
 /// 分配出的物理页
 ///
 /// # `Tracker` 是什么？
@@ -16,14 +19,14 @@ use super::{super::config::PAGE_SIZE, allocator::FRAME_ALLOCATOR};
 ///
 /// 使用 `Tracker` 其实就很像使用一个 smart pointer。如果需要引用计数，
 /// 就在外面再套一层 [`Arc`](alloc::sync::Arc) 就好
-use crate::memory::address::*;
-pub struct FrameTracker(pub PhysicalPageNumber);
+pub struct FrameTracker(pub(super) PhysicalPageNumber);
 
 impl FrameTracker {
-    //帧的物理地址
+    /// 帧的物理地址
     pub fn address(&self) -> PhysicalAddress {
         self.0.into()
     }
+    /// 帧的物理页号
     pub fn page_number(&self) -> PhysicalPageNumber {
         self.0
     }
