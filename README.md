@@ -145,3 +145,16 @@ https://rcore-os.github.io/rCore-Tutorial-deploy/docs/lab-0/guide/intro.html
 
 ## 7.24
 - 解决了stride算法的溢出问题，并应用到分支lab4
+
+## 7.25
+- 进行试验六，完成了sys_getid和sys_fork，打包文不了解做法
+
+## 7.26
+- 补充了7个rust的pat练习题目，在rust的repo上完成了。
+- 参加第三次交流会
+- 提交调查问卷
+
+## 7.27
+- 在分支lab3+上完成了时钟页面置换算法
+- 完成rCoreTutorial的实验报告
+
