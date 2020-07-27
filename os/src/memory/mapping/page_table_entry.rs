@@ -76,6 +76,13 @@ impl PageTableEntry {
     pub fn is_valid(&self) -> bool {
         self.flags().contains(Flags::VALID)
     }
+    //获取访问位和写位
+    pub fn rw_falgs(&self) -> (bool /* ACCESSED */, bool /* DIRTY */) {
+        (
+            self.flags().contains(Flags::ACCESSED),
+            self.flags().contains(Flags::DIRTY),
+        )
+    }
     /// 是否指向下一级（RWX 全为0）
     pub fn has_next_level(&self) -> bool {
         !self
