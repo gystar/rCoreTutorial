@@ -83,6 +83,11 @@ impl PageTableEntry {
             self.flags().contains(Flags::DIRTY),
         )
     }
+    //将访问位和写位置为flase
+    pub fn reset_rw_falgs(&mut self) {
+        self.flags().set(Flags::ACCESSED, false);
+        self.flags().set(Flags::DIRTY, false);
+    }
     /// 是否指向下一级（RWX 全为0）
     pub fn has_next_level(&self) -> bool {
         !self

@@ -76,6 +76,11 @@ fn cmp_flags(a: usize, b: usize) -> bool {
     x < y
 }
 
+fn reset_rw_flags(ptr: usize) {
+    let mut entry = unsafe { *(ptr as *mut PageTableEntry) };
+    entry.reset_rw_falgs();
+}
+
 impl Swapper for ClockSwapper {
     fn new(quota: usize) -> Self {
         Self {
@@ -96,6 +101,9 @@ impl Swapper for ClockSwapper {
                 if cmp_flags(self.queue[i].2, self.queue[min_index].2) {
                     min_index = i;
                 }
+            }
+            for item in self.queue.iter() {
+                reset_rw_flags(item.2);
             }
             let ret = self.queue.remove(min_index);
             Some((ret.0, ret.1))
